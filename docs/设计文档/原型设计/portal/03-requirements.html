@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Workflow — 需求分析</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0A0C0F;--surface:#111318;--elevated:#181C22;--hover:#1E2230;
+  --b0:rgba(255,255,255,0.05);--b1:rgba(255,255,255,0.08);--b2:rgba(255,255,255,0.13);
+  --t1:#E2E6EE;--t2:#8B94A8;--t3:#4A5468;
+  --accent:#7C6AF7;--accent-d:rgba(124,106,247,0.12);--accent-g:rgba(124,106,247,0.25);
+  --neon:#00E5FF;--ok:#22C55E;--warn:#F59E0B;--danger:#F43F5E;
+  --term:#0D1117;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',-apple-system,sans-serif;
+  --r:10px;--rl:14px
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--t1);height:100vh;overflow:hidden;display:flex}
+
+.sidebar{width:220px;min-width:220px;background:rgba(14,16,20,0.92);backdrop-filter:blur(24px);border-right:1px solid var(--b0);display:flex;flex-direction:column;padding:14px 10px}
+.sb-logo{display:flex;align-items:center;gap:9px;padding:6px 8px;margin-bottom:14px}
+.sb-logo-icon{width:30px;height:30px;background:linear-gradient(135deg,#7C6AF7,#A78BFA);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 0 14px rgba(124,106,247,0.35)}
+.sb-logo-text{font-size:14px;font-weight:700;letter-spacing:-.3px}
+.sb-project{background:var(--elevated);border:1px solid var(--b1);border-radius:var(--r);padding:10px 12px;margin-bottom:18px;cursor:pointer;transition:border-color .2s;text-decoration:none;display:block}
+.sb-project:hover{border-color:var(--b2)}
+.sb-proj-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);margin-bottom:4px}
+.sb-proj-name{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:6px}
+.sb-stage-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(124,106,247,0.12);border:1px solid rgba(124,106,247,0.25);color:var(--accent);font-size:10.5px;font-weight:500;padding:2px 8px;border-radius:20px}
+.sb-stage-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 5px var(--accent)}
+.sb-nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.sb-nav-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);padding:8px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;font-size:13px;color:var(--t2);text-decoration:none}
+.nav-item:hover{background:var(--hover);color:var(--t1)}
+.nav-item.active{background:var(--accent-d);color:var(--t1)}
+.nav-item.active .nav-icon{color:var(--accent)}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.sb-footer{border-top:1px solid var(--b0);padding-top:10px;margin-top:8px}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:50px;border-bottom:1px solid var(--b0);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600;flex:1}
+.model-sel{background:var(--elevated);border:1px solid var(--b1);color:var(--t2);font-family:var(--mono);font-size:11.5px;padding:5px 10px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.model-dot{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.topbar-btn{background:var(--elevated);border:1px solid var(--b1);color:var(--t2);font-family:var(--sans);font-size:12px;padding:5px 12px;border-radius:7px;cursor:pointer;transition:all .2s}
+.topbar-btn:hover{border-color:var(--b2);color:var(--t1)}
+.topbar-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.topbar-btn.primary:hover{opacity:.9}
+
+/* Editor layout */
+.editor-shell{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* Prompt templates bar */
+.prompt-bar{padding:10px 20px;border-bottom:1px solid var(--b0);display:flex;align-items:center;gap:8px;overflow-x:auto;flex-shrink:0}
+.prompt-bar::-webkit-scrollbar{display:none}
+.prompt-bar-label{font-size:11px;font-weight:600;color:var(--t3);white-space:nowrap;margin-right:4px}
+.prompt-chip{background:var(--elevated);border:1px solid var(--b1);color:var(--t2);font-size:11.5px;padding:5px 12px;border-radius:20px;cursor:pointer;white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:5px}
+.prompt-chip:hover{border-color:var(--accent);color:var(--t1);background:var(--accent-d)}
+
+/* Editor area */
+.editor-area{flex:1;display:flex;overflow:hidden}
+
+/* Editor panel */
+.editor-pane{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.editor-tabs{display:flex;align-items:center;gap:0;border-bottom:1px solid var(--b0);padding:0 20px;background:var(--surface);flex-shrink:0}
+.editor-tab{font-size:12px;color:var(--t3);padding:10px 14px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.editor-tab.active{color:var(--t1);border-bottom-color:var(--accent)}
+.editor-tab:hover{color:var(--t2)}
+
+.cm-editor{flex:1;padding:20px 24px;overflow-y:auto;font-family:var(--mono);font-size:13px;line-height:1.75;color:var(--t1)}
+.cm-editor::-webkit-scrollbar{width:5px}
+.cm-editor::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+
+/* Syntax colors */
+.md-h1{color:#7DD3FC;font-size:18px;font-weight:700}
+.md-h2{color:#A78BFA;font-size:15px;font-weight:700}
+.md-h3{color:#6EE7B7;font-size:13.5px;font-weight:600}
+.md-bold{color:var(--t1);font-weight:700}
+.md-italic{color:var(--warn);font-style:italic}
+.md-code{background:rgba(124,106,247,0.12);color:#A78BFA;padding:1px 5px;border-radius:4px;font-size:12px}
+.md-list{color:var(--t2)}
+.md-list-bullet{color:var(--accent)}
+.md-comment{color:var(--t3)}
+.md-link{color:var(--neon);text-decoration:underline}
+.md-hr{color:var(--b2)}
+
+/* Terminal drawer */
+.terminal{height:260px;background:var(--term);border-top:1px solid var(--b1);display:flex;flex-direction:column;flex-shrink:0;transition:height .3s}
+.terminal.collapsed{height:42px}
+.term-header{height:42px;min-height:42px;display:flex;align-items:center;padding:0 16px;gap:10px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;user-select:none}
+.term-dots{display:flex;gap:5px}
+.term-dot{width:10px;height:10px;border-radius:50%}
+.term-title{font-size:12px;font-family:var(--mono);color:var(--t3);flex:1}
+.term-toggle{font-size:11px;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:5px;transition:color .2s}
+.term-toggle:hover{color:var(--t1)}
+.term-body{flex:1;padding:10px 16px;overflow-y:auto;font-family:var(--mono);font-size:12px;line-height:1.7}
+.term-body::-webkit-scrollbar{width:4px}
+.term-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:3px}
+.term-line{margin-bottom:2px}
+.term-prompt{color:#22C55E}
+.term-cmd{color:#E2E6EE}
+.term-out{color:#8B94A8}
+.term-ai{color:#A78BFA}
+.term-success{color:#22C55E}
+.term-warn{color:#F59E0B}
+.term-input-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.term-cursor{display:inline-block;width:8px;height:14px;background:var(--ok);border-radius:1px;animation:blink .8s infinite}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+.tool-btns{display:flex;align-items:center;padding:0 20px;gap:8px;height:44px;border-top:1px solid var(--b0);background:var(--surface);flex-shrink:0}
+.tool-btn{display:flex;align-items:center;gap:6px;background:var(--elevated);border:1px solid var(--b1);color:var(--t2);font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer;transition:all .2s}
+.tool-btn:hover{border-color:var(--b2);color:var(--t1)}
+.tool-btn.active{background:var(--accent-d);border-color:var(--accent);color:var(--accent)}
+.tool-sep{width:1px;height:20px;background:var(--b1);margin:0 4px}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-icon">⚡</div>
+    <span class="sb-logo-text">AI Workflow</span>
+  </div>
+  <a href="./02-project-dashboard.html" class="sb-project">
+    <div class="sb-proj-label">当前项目</div>
+    <div class="sb-proj-name">AI 电商平台</div>
+    <div class="sb-stage-badge"><div class="sb-stage-dot"></div>需求分析</div>
+  </a>
+  <nav class="sb-nav">
+    <div class="sb-nav-label">工作流</div>
+    <a href="./03-requirements.html" class="nav-item active"><span class="nav-icon">📋</span>需求分析</a>
+    <a href="./04-prototype-design.html" class="nav-item"><span class="nav-icon">🎨</span>原型设计</a>
+    <a href="./05-task-board.html" class="nav-item"><span class="nav-icon">✅</span>任务看板</a>
+    <a href="./06-retrospective.html" class="nav-item"><span class="nav-icon">📊</span>复盘总结</a>
+  </nav>
+  <div class="sb-footer">
+    <a href="#" class="nav-item"><span class="nav-icon">⚙️</span>设置</a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <span class="topbar-title">需求分析</span>
+    <button class="topbar-btn" onclick="exportMd()">导出 MD</button>
+    <button class="topbar-btn">锁定需求 🔒</button>
+    <div class="model-sel"><div class="model-dot"></div>claude-sonnet-4-6 ▾</div>
+  </div>
+
+  <!-- Prompt Templates -->
+  <div class="prompt-bar">
+    <span class="prompt-bar-label">预置提示词：</span>
+    <div class="prompt-chip" onclick="insertPrompt('full')">📋 完整需求分析</div>
+    <div class="prompt-chip" onclick="insertPrompt('user-story')">👤 用户故事</div>
+    <div class="prompt-chip" onclick="insertPrompt('competitor')">🔍 竞品分析</div>
+    <div class="prompt-chip" onclick="insertPrompt('persona')">🎭 用户画像</div>
+    <div class="prompt-chip" onclick="insertPrompt('mvp')">🚀 MVP 范围</div>
+    <div class="prompt-chip" onclick="insertPrompt('api')">🔌 API 需求</div>
+    <div class="prompt-chip" onclick="insertPrompt('nfr')">⚡ 非功能需求</div>
+  </div>
+
+  <div class="editor-shell">
+    <div class="editor-area">
+      <div class="editor-pane">
+        <div class="editor-tabs">
+          <div class="editor-tab active">PRD.md</div>
+          <div class="editor-tab">用户故事.md</div>
+          <div class="editor-tab" style="color:var(--t3);font-style:italic">+ 新建</div>
+        </div>
+
+        <div class="cm-editor" id="editor" contenteditable="true" spellcheck="false">
+<div class="md-h1"># AI 电商平台 — 产品需求文档</div>
+<br>
+<div class="md-comment">&gt; 版本：v1.2 | 状态：草稿 | 最后更新：2026-03-16</div>
+<br>
+<div class="md-h2">## 一、产品概述</div>
+<br>
+<div class="md-list"><span class="md-list-bullet">**</span><span class="md-bold">产品名称</span>：AI 智选电商平台</div>
+<div class="md-list"><span class="md-list-bullet">**</span><span class="md-bold">目标用户</span>：中小商家，月 GMV 10-500 万</div>
+<div class="md-list"><span class="md-list-bullet">**</span><span class="md-bold">核心价值</span>：通过 AI 能力降低运营成本，提升转化率</div>
+<br>
+<div class="md-h2">## 二、核心功能模块</div>
+<br>
+<div class="md-h3">### 2.1 智能选品</div>
+<br>
+<div>根据市场趋势和用户行为数据，AI 自动分析并推荐高潜力商品。</div>
+<br>
+<div class="md-list"><span class="md-list-bullet">- </span>支持多平台数据接入（淘宝、拼多多、抖音）</div>
+<div class="md-list"><span class="md-list-bullet">- </span>实时热度追踪，7 天趋势图</div>
+<div class="md-list"><span class="md-list-bullet">- </span>竞品价格监控，自动预警</div>
+<div class="md-list"><span class="md-list-bullet">- </span>选品评分系统：<span class="md-code">综合分 = 热度×0.4 + 利润率×0.35 + 竞争度×0.25</span></div>
+<br>
+<div class="md-h3">### 2.2 动态定价</div>
+<br>
+<div class="md-list"><span class="md-list-bullet">- </span>基于市场供需关系动态调整价格</div>
+<div class="md-list"><span class="md-list-bullet">- </span>设定价格上下限保护利润空间</div>
+<div class="md-list"><span class="md-list-bullet">- </span>节假日促销自动化策略</div>
+<br>
+<div class="md-h3">### 2.3 个性化推荐</div>
+<br>
+<div>使用协同过滤 + 内容过滤混合算法，为每位用户生成专属商品推荐列表。</div>
+<br>
+<div class="md-h2">## 三、用户角色</div>
+<br>
+<div class="md-list"><span class="md-list-bullet">| </span>角色 | 权限 | 主要操作 |</div>
+<div class="md-list"><span class="md-list-bullet">|</span>---|---|---|</div>
+<div class="md-list"><span class="md-list-bullet">| </span>商家管理员 | 全部 | 配置店铺、查看报表 |</div>
+<div class="md-list"><span class="md-list-bullet">| </span>运营人员 | 商品+订单 | 日常运营、活动设置 |</div>
+<div class="md-list"><span class="md-list-bullet">| </span>数据分析师 | 只读 | 查看数据、导出报告 |</div>
+<br>
+<div class="md-h2">## 四、非功能需求</div>
+<br>
+<div class="md-list"><span class="md-list-bullet">- </span><span class="md-bold">性能</span>：API 响应 P95 &lt; 200ms，页面首屏 &lt; 1.5s</div>
+<div class="md-list"><span class="md-list-bullet">- </span><span class="md-bold">可用性</span>：SLA 99.9%，支持降级方案</div>
+<div class="md-list"><span class="md-list-bullet">- </span><span class="md-bold">安全</span>：OAuth 2.0 + JWT，数据传输全程 TLS</div>
+<div class="md-list"><span class="md-list-bullet">- </span><span class="md-bold">扩展性</span>：微服务架构，核心模块可独立扩容</div>
+<br>
+<div class="md-comment">&lt;!-- TODO: 补充第五章——里程碑规划 --&gt;</div>
+        </div>
+
+        <!-- Tool buttons -->
+        <div class="tool-btns">
+          <button class="tool-btn" onclick="toggleTerminal()">
+            <span>⌨️</span> 终端
+          </button>
+          <div class="tool-sep"></div>
+          <button class="tool-btn" onclick="copyPrompt()">
+            <span>📋</span> 复制提示词到 Claude Code
+          </button>
+          <button class="tool-btn">
+            <span>🔗</span> 链接到原型图
+          </button>
+          <div style="flex:1"></div>
+          <span style="font-size:11px;font-family:var(--mono);color:var(--t3)">Ln 42, Col 1</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terminal drawer -->
+    <div class="terminal" id="terminal">
+      <div class="term-header" onclick="toggleTerminal()">
+        <div class="term-dots">
+          <div class="term-dot" style="background:#F43F5E"></div>
+          <div class="term-dot" style="background:#F59E0B"></div>
+          <div class="term-dot" style="background:#22C55E"></div>
+        </div>
+        <span class="term-title">Claude Code CLI — /Developer/ai-ecommerce</span>
+        <button class="term-toggle" id="term-toggle-btn">▼ 收起</button>
+      </div>
+      <div class="term-body" id="term-body">
+        <div class="term-line"><span class="term-out">Claude Code v1.2.18 · claude-sonnet-4-6</span></div>
+        <div class="term-line"><span class="term-out">✓ 工作区已加载: /Developer/ai-ecommerce</span></div>
+        <div class="term-line">&nbsp;</div>
+        <div class="term-line"><span class="term-prompt">❯ </span><span class="term-cmd">请根据以下需求描述，生成完整的 PRD.md 文档，包含产品定位、功能模块、用户角色、非功能需求、里程碑规划。</span></div>
+        <div class="term-line"><span class="term-out">  项目名称：AI 智选电商平台</span></div>
+        <div class="term-line"><span class="term-out">  目标用户：中小商家</span></div>
+        <div class="term-line"><span class="term-out">  核心功能：智能选品、动态定价、个性化推荐、AI 客服</span></div>
+        <div class="term-line">&nbsp;</div>
+        <div class="term-line"><span class="term-ai">✦ Claude: 好的，我将为您生成完整的 PRD.md...</span></div>
+        <div class="term-line"><span class="term-ai">  正在分析需求结构... ✓</span></div>
+        <div class="term-line"><span class="term-ai">  生成产品定位章节... ✓</span></div>
+        <div class="term-line"><span class="term-ai">  生成功能模块章节... ✓</span></div>
+        <div class="term-line"><span class="term-ai">  生成用户角色矩阵... ✓</span></div>
+        <div class="term-line"><span class="term-ai">  生成非功能需求... ✓</span></div>
+        <div class="term-line"><span class="term-success">✓ PRD.md 已生成并写入 docs/PRD.md (1,248 字)</span></div>
+        <div class="term-line">&nbsp;</div>
+        <div class="term-input-row">
+          <span class="term-prompt">❯ </span>
+          <span class="term-cursor"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+let termOpen = true;
+function toggleTerminal(){
+  termOpen = !termOpen;
+  const t = document.getElementById('terminal');
+  const btn = document.getElementById('term-toggle-btn');
+  t.classList.toggle('collapsed', !termOpen);
+  btn.textContent = termOpen ? '▼ 收起' : '▲ 展开';
+}
+
+const prompts = {
+  'full': '请对以下产品进行完整需求分析，按照 PRD 标准格式输出，包含：产品定位、目标用户画像、核心功能模块（含优先级）、用户流程图、非功能需求、风险评估。',
+  'user-story': '请将以下功能需求转化为用户故事格式：\n作为 [角色]，我希望 [功能]，以便 [价值]。\n每个故事需包含验收标准（AC）。',
+  'competitor': '请对以下产品进行竞品分析，包含：竞品列表、功能对比矩阵、差异化机会点、SWOT 分析。',
+  'persona': '请基于目标用户描述，生成 3 个典型用户画像（Persona），每个包含：基本信息、痛点、目标、使用场景、行为特征。',
+  'mvp': '请基于以下功能列表，定义 MVP 范围：识别核心功能（Must Have）、增值功能（Should Have）、延后功能（Could Have），并给出 MVP 开发周期估算。',
+  'api': '请为以下功能模块设计 RESTful API 接口文档，包含：接口列表、请求/响应格式、鉴权方式、错误码定义。',
+  'nfr': '请为以下产品补充非功能需求，包含：性能指标、可用性 SLA、安全要求、合规要求、扩展性设计。'
+};
+
+function insertPrompt(type){
+  const text = prompts[type];
+  if(!text) return;
+  const tb = document.getElementById('term-body');
+  if(!termOpen) toggleTerminal();
+  // Append to terminal
+  const div = document.createElement('div');
+  div.className = 'term-line';
+  div.innerHTML = `<span class="term-prompt">❯ </span><span class="term-cmd">[已插入提示词模板：${type}]</span>`;
+  tb.insertBefore(div, tb.lastElementChild);
+  tb.scrollTop = tb.scrollHeight;
+}
+
+function copyPrompt(){
+  const tb = document.getElementById('term-body');
+  if(!termOpen) toggleTerminal();
+  const div = document.createElement('div');
+  div.className = 'term-line';
+  div.innerHTML = `<span class="term-success">✓ 提示词已复制到剪贴板，粘贴到 Claude Code CLI 开始生成</span>`;
+  tb.insertBefore(div, tb.lastElementChild);
+  tb.scrollTop = tb.scrollHeight;
+}
+
+function exportMd(){
+  alert('需求文档已导出到：/Developer/ai-ecommerce/docs/PRD.md');
+}
+</script>
+</body>
+</html>

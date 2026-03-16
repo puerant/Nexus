@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Workflow — 原型设计</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0A0C0F;--surface:#111318;--elevated:#181C22;--hover:#1E2230;
+  --b0:rgba(255,255,255,0.05);--b1:rgba(255,255,255,0.08);--b2:rgba(255,255,255,0.13);
+  --t1:#E2E6EE;--t2:#8B94A8;--t3:#4A5468;
+  --accent:#7C6AF7;--accent-d:rgba(124,106,247,0.12);--accent-g:rgba(124,106,247,0.25);
+  --neon:#00E5FF;--ok:#22C55E;--warn:#F59E0B;
+  --term:#0D1117;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',-apple-system,sans-serif;
+  --r:10px;--rl:14px
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--t1);height:100vh;overflow:hidden;display:flex}
+
+.sidebar{width:220px;min-width:220px;background:rgba(14,16,20,0.92);backdrop-filter:blur(24px);border-right:1px solid var(--b0);display:flex;flex-direction:column;padding:14px 10px}
+.sb-logo{display:flex;align-items:center;gap:9px;padding:6px 8px;margin-bottom:14px}
+.sb-logo-icon{width:30px;height:30px;background:linear-gradient(135deg,#7C6AF7,#A78BFA);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 0 14px rgba(124,106,247,0.35)}
+.sb-logo-text{font-size:14px;font-weight:700;letter-spacing:-.3px}
+.sb-project{background:var(--elevated);border:1px solid var(--b1);border-radius:var(--r);padding:10px 12px;margin-bottom:18px;cursor:pointer;transition:border-color .2s;text-decoration:none;display:block}
+.sb-project:hover{border-color:var(--b2)}
+.sb-proj-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);margin-bottom:4px}
+.sb-proj-name{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:6px}
+.sb-stage-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);color:var(--neon);font-size:10.5px;padding:2px 8px;border-radius:20px}
+.sb-stage-dot{width:5px;height:5px;border-radius:50%;background:var(--neon);box-shadow:0 0 5px var(--neon)}
+.sb-nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.sb-nav-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);padding:8px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--t2);text-decoration:none;transition:background .15s,color .15s}
+.nav-item:hover{background:var(--hover);color:var(--t1)}
+.nav-item.active{background:var(--accent-d);color:var(--t1)}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.sb-footer{border-top:1px solid var(--b0);padding-top:10px;margin-top:8px}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:50px;border-bottom:1px solid var(--b0);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600;flex:1}
+.model-sel{background:var(--elevated);border:1px solid var(--b1);color:var(--t2);font-family:var(--mono);font-size:11.5px;padding:5px 10px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.model-dot{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.topbar-btn{background:var(--elevated);border:1px solid var(--b1);color:var(--t2);font-size:12px;padding:5px 12px;border-radius:7px;cursor:pointer;transition:all .2s;font-family:var(--sans)}
+.topbar-btn:hover{border-color:var(--b2);color:var(--t1)}
+
+/* Content layout */
+.work-area{flex:1;display:flex;overflow:hidden}
+
+/* File panel */
+.file-panel{width:220px;min-width:220px;border-right:1px solid var(--b0);display:flex;flex-direction:column;background:var(--surface)}
+.fp-header{padding:12px 14px;border-bottom:1px solid var(--b0);display:flex;align-items:center;gap:8px}
+.fp-title{font-size:12px;font-weight:600;color:var(--t2);flex:1;text-transform:uppercase;letter-spacing:.6px}
+.fp-icon-btn{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:3px;border-radius:4px;transition:color .2s}
+.fp-icon-btn:hover{color:var(--t1)}
+.file-tree{flex:1;overflow-y:auto;padding:8px 0}
+.tree-folder{user-select:none}
+.tree-folder-header{display:flex;align-items:center;gap:6px;padding:6px 14px;cursor:pointer;font-size:12.5px;color:var(--t2);transition:background .15s}
+.tree-folder-header:hover{background:var(--hover)}
+.tree-arrow{font-size:9px;color:var(--t3);transition:transform .2s}
+.tree-folder.open .tree-arrow{transform:rotate(90deg)}
+.tree-folder-name{flex:1}
+.tree-children{padding-left:12px;display:none}
+.tree-folder.open .tree-children{display:block}
+.tree-file{display:flex;align-items:center;gap:7px;padding:6px 14px;cursor:pointer;font-size:12.5px;color:var(--t2);border-radius:6px;margin:1px 6px;transition:all .15s}
+.tree-file:hover{background:var(--hover);color:var(--t1)}
+.tree-file.active{background:var(--accent-d);color:var(--t1)}
+.tree-file-icon{font-size:13px;flex-shrink:0}
+.tree-file-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tree-file-badge{font-size:9.5px;background:var(--ok);color:#fff;padding:1px 5px;border-radius:3px;font-weight:600}
+
+/* Browser panel */
+.browser-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.browser-bar{height:42px;background:var(--elevated);border-bottom:1px solid var(--b0);display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0}
+.browser-nav-btns{display:flex;gap:4px}
+.browser-nav-btn{background:var(--hover);border:1px solid var(--b1);color:var(--t3);font-size:11px;width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
+.browser-nav-btn:hover{color:var(--t1)}
+.browser-url{flex:1;background:var(--hover);border:1px solid var(--b1);border-radius:7px;padding:5px 10px;font-family:var(--mono);font-size:11.5px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:text}
+.browser-action{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:4px;transition:color .2s}
+.browser-action:hover{color:var(--t1)}
+.browser-view{flex:1;background:var(--elevated);overflow:hidden;position:relative}
+.browser-iframe{width:100%;height:100%;border:none;background:#fff}
+.browser-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;color:var(--t3)}
+.browser-placeholder .big-icon{font-size:48px;opacity:.4}
+.browser-placeholder .hint{font-size:13px;text-align:center;line-height:1.6;max-width:300px}
+
+/* Terminal */
+.terminal{height:240px;background:var(--term);border-top:1px solid var(--b1);display:flex;flex-direction:column;flex-shrink:0;transition:height .3s}
+.terminal.collapsed{height:42px}
+.term-header{height:42px;min-height:42px;display:flex;align-items:center;padding:0 16px;gap:10px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;user-select:none}
+.term-dots{display:flex;gap:5px}
+.term-dot{width:10px;height:10px;border-radius:50%}
+.term-title{font-size:12px;font-family:var(--mono);color:var(--t3);flex:1}
+.term-toggle{font-size:11px;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:5px}
+.term-body{flex:1;padding:10px 16px;overflow-y:auto;font-family:var(--mono);font-size:12px;line-height:1.7}
+.term-prompt{color:#22C55E}
+.term-cmd{color:#E2E6EE}
+.term-out{color:#8B94A8}
+.term-ai{color:#A78BFA}
+.term-success{color:#22C55E}
+.term-warn{color:#F59E0B}
+.term-cursor{display:inline-block;width:8px;height:14px;background:var(--ok);border-radius:1px;animation:blink .8s infinite}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+.tool-btns{display:flex;align-items:center;padding:0 14px;gap:8px;height:44px;border-top:1px solid var(--b0);background:var(--surface);flex-shrink:0}
+.tool-btn{display:flex;align-items:center;gap:6px;background:var(--elevated);border:1px solid var(--b1);color:var(--t2);font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer;transition:all .2s}
+.tool-btn:hover{border-color:var(--b2);color:var(--t1)}
+
+/* Prompt panel overlay */
+.prompt-panel{position:absolute;bottom:0;left:0;right:0;background:rgba(13,17,23,0.97);backdrop-filter:blur(20px);border-top:1px solid var(--b1);padding:16px;z-index:10;display:none}
+.prompt-panel.show{display:block;animation:slideUp .2s ease}
+@keyframes slideUp{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+.prompt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.prompt-card{background:var(--elevated);border:1px solid var(--b1);border-radius:8px;padding:12px;cursor:pointer;transition:all .2s}
+.prompt-card:hover{border-color:var(--accent);background:var(--accent-d)}
+.prompt-card-title{font-size:12.5px;font-weight:600;margin-bottom:3px;display:flex;align-items:center;gap:6px}
+.prompt-card-desc{font-size:11px;color:var(--t3);line-height:1.5}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-icon">⚡</div>
+    <span class="sb-logo-text">AI Workflow</span>
+  </div>
+  <a href="./02-project-dashboard.html" class="sb-project">
+    <div class="sb-proj-label">当前项目</div>
+    <div class="sb-proj-name">AI 电商平台</div>
+    <div class="sb-stage-badge"><div class="sb-stage-dot"></div>原型设计</div>
+  </a>
+  <nav class="sb-nav">
+    <div class="sb-nav-label">工作流</div>
+    <a href="./03-requirements.html" class="nav-item"><span class="nav-icon">📋</span>需求分析</a>
+    <a href="./04-prototype-design.html" class="nav-item active"><span class="nav-icon">🎨</span>原型设计</a>
+    <a href="./05-task-board.html" class="nav-item"><span class="nav-icon">✅</span>任务看板</a>
+    <a href="./06-retrospective.html" class="nav-item"><span class="nav-icon">📊</span>复盘总结</a>
+  </nav>
+  <div class="sb-footer">
+    <a href="#" class="nav-item"><span class="nav-icon">⚙️</span>设置</a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <span class="topbar-title">原型设计</span>
+    <button class="topbar-btn" onclick="saveVersion()">🏷 存档版本</button>
+    <button class="topbar-btn">📤 导出</button>
+    <div class="model-sel"><div class="model-dot"></div>claude-sonnet-4-6 ▾</div>
+  </div>
+
+  <div class="work-area">
+    <!-- File Panel -->
+    <div class="file-panel">
+      <div class="fp-header">
+        <span class="fp-title">原型文件</span>
+        <button class="fp-icon-btn" onclick="newFile()" title="新建文件">＋</button>
+        <button class="fp-icon-btn" title="新建文件夹">📁</button>
+      </div>
+      <div class="file-tree">
+        <div class="tree-folder open" id="folder-main">
+          <div class="tree-folder-header" onclick="toggleFolder('folder-main')">
+            <span class="tree-arrow">▶</span>
+            <span>📁</span>
+            <span class="tree-folder-name">prototypes</span>
+          </div>
+          <div class="tree-children">
+            <div class="tree-file active" onclick="loadFile('dashboard')">
+              <span class="tree-file-icon">🌐</span>
+              <span class="tree-file-name">01-dashboard.html</span>
+              <span class="tree-file-badge">✓</span>
+            </div>
+            <div class="tree-file" onclick="loadFile('login')">
+              <span class="tree-file-icon">🌐</span>
+              <span class="tree-file-name">02-login.html</span>
+            </div>
+            <div class="tree-file" onclick="loadFile('products')">
+              <span class="tree-file-icon">🌐</span>
+              <span class="tree-file-name">03-products.html</span>
+            </div>
+            <div class="tree-file" onclick="loadFile('cart')">
+              <span class="tree-file-icon">🌐</span>
+              <span class="tree-file-name">04-cart.html</span>
+            </div>
+            <div class="tree-file" onclick="loadFile('checkout')">
+              <span class="tree-file-icon">🌐</span>
+              <span class="tree-file-name">05-checkout.html</span>
+            </div>
+          </div>
+        </div>
+        <div class="tree-folder" id="folder-archived">
+          <div class="tree-folder-header" onclick="toggleFolder('folder-archived')">
+            <span class="tree-arrow">▶</span>
+            <span>📦</span>
+            <span class="tree-folder-name">archived</span>
+          </div>
+          <div class="tree-children">
+            <div class="tree-file" style="opacity:.6" onclick="loadFile('v1-dashboard')">
+              <span class="tree-file-icon">🌐</span>
+              <span class="tree-file-name">v1-dashboard.html</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Browser Panel -->
+    <div class="browser-panel">
+      <div class="browser-bar">
+        <div class="browser-nav-btns">
+          <div class="browser-nav-btn">←</div>
+          <div class="browser-nav-btn">→</div>
+          <div class="browser-nav-btn" onclick="reloadPreview()">↻</div>
+        </div>
+        <div class="browser-url" id="browser-url">file:///Developer/ai-ecommerce/prototypes/01-dashboard.html</div>
+        <button class="browser-action" title="在新窗口打开">⤢</button>
+        <button class="browser-action" title="设备预览">📱</button>
+      </div>
+
+      <div class="browser-view">
+        <!-- Embedded prototype preview -->
+        <div id="browser-content" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#F8F9FA">
+          <div style="width:100%;height:100%;padding:20px;font-family:system-ui;background:#F0F2F5;overflow-y:auto">
+            <!-- Mock prototype: E-commerce Dashboard -->
+            <div style="max-width:1100px;margin:0 auto">
+              <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="width:32px;height:32px;background:#7C6AF7;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">AI</div>
+                  <span style="font-weight:700;font-size:16px;color:#111">智选电商平台</span>
+                </div>
+                <div style="display:flex;gap:20px;font-size:13px;color:#666">
+                  <span style="color:#7C6AF7;font-weight:500">工作台</span>
+                  <span>商品管理</span><span>订单管理</span><span>数据分析</span>
+                </div>
+                <div style="width:32px;height:32px;background:#E8E8E8;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px">
+                <div style="background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+                  <div style="font-size:11px;color:#999;margin-bottom:8px;text-transform:uppercase">今日销售额</div>
+                  <div style="font-size:24px;font-weight:800;color:#111">¥48,392</div>
+                  <div style="font-size:11px;color:#22C55E;margin-top:4px">↑ 12.4% 较昨日</div>
+                </div>
+                <div style="background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+                  <div style="font-size:11px;color:#999;margin-bottom:8px;text-transform:uppercase">订单数</div>
+                  <div style="font-size:24px;font-weight:800;color:#111">284</div>
+                  <div style="font-size:11px;color:#22C55E;margin-top:4px">↑ 8.1% 较昨日</div>
+                </div>
+                <div style="background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+                  <div style="font-size:11px;color:#999;margin-bottom:8px;text-transform:uppercase">AI 推荐点击率</div>
+                  <div style="font-size:24px;font-weight:800;color:#7C6AF7">34.2%</div>
+                  <div style="font-size:11px;color:#F59E0B;margin-top:4px">→ 持平昨日</div>
+                </div>
+                <div style="background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+                  <div style="font-size:11px;color:#999;margin-bottom:8px;text-transform:uppercase">库存预警</div>
+                  <div style="font-size:24px;font-weight:800;color:#F43F5E">7</div>
+                  <div style="font-size:11px;color:#F43F5E;margin-top:4px">↓ 需立即补货</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
+                <div style="background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+                  <div style="font-weight:600;margin-bottom:14px;font-size:13px">销售趋势（近 7 天）</div>
+                  <div style="height:100px;display:flex;align-items:flex-end;gap:8px">
+                    <div style="flex:1;background:#E8E3FF;height:60%;border-radius:4px 4px 0 0"></div>
+                    <div style="flex:1;background:#E8E3FF;height:45%;border-radius:4px 4px 0 0"></div>
+                    <div style="flex:1;background:#E8E3FF;height:72%;border-radius:4px 4px 0 0"></div>
+                    <div style="flex:1;background:#E8E3FF;height:55%;border-radius:4px 4px 0 0"></div>
+                    <div style="flex:1;background:#E8E3FF;height:88%;border-radius:4px 4px 0 0"></div>
+                    <div style="flex:1;background:#E8E3FF;height:65%;border-radius:4px 4px 0 0"></div>
+                    <div style="flex:1;background:#7C6AF7;height:100%;border-radius:4px 4px 0 0;box-shadow:0 0 10px rgba(124,106,247,.4)"></div>
+                  </div>
+                </div>
+                <div style="background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+                  <div style="font-weight:600;margin-bottom:12px;font-size:13px">AI 智能提醒</div>
+                  <div style="font-size:12px;color:#555;line-height:1.7">
+                    <div style="padding:7px 0;border-bottom:1px solid #F0F0F0">🔥 连衣裙搜索量上涨 43%，建议补货</div>
+                    <div style="padding:7px 0;border-bottom:1px solid #F0F0F0">💡 转化率低于均值，建议优化详情页</div>
+                    <div style="padding:7px 0">📦 7 款商品库存不足，预计 3 天售罄</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tool-btns">
+        <button class="tool-btn" onclick="togglePromptPanel()">
+          ⌨️ 终端
+        </button>
+        <div style="width:1px;height:20px;background:var(--b1);margin:0 4px"></div>
+        <button class="tool-btn">📋 需求参考</button>
+        <button class="tool-btn">🔄 重新生成</button>
+        <div style="flex:1"></div>
+        <span style="font-size:11px;font-family:var(--mono);color:var(--t3)" id="file-info">01-dashboard.html · 存档：v1-客户确认</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Terminal -->
+  <div class="terminal collapsed" id="terminal">
+    <div class="term-header" onclick="toggleTerminal()">
+      <div class="term-dots">
+        <div class="term-dot" style="background:#F43F5E"></div>
+        <div class="term-dot" style="background:#F59E0B"></div>
+        <div class="term-dot" style="background:#22C55E"></div>
+      </div>
+      <span class="term-title">Claude Code CLI — /Developer/ai-ecommerce</span>
+      <button class="term-toggle" id="term-toggle-btn">▲ 展开</button>
+    </div>
+    <div class="term-body" id="term-body">
+      <div style="color:var(--t3);font-size:12px;margin-bottom:10px">
+        💡 提示词模板已加载。修改下方提示词后按 Enter 发送给 Claude Code。
+      </div>
+      <div style="color:#8B94A8">
+        ❯ <span style="color:#E2E6EE">请根据 PRD.md 中的「首页/工作台」需求，生成一个高保真的 HTML 原型页面。</span>
+      </div>
+      <div style="color:#8B94A8">  要求：使用现代 CSS，符合主流电商视觉风格，包含导航栏、数据概览卡片、</div>
+      <div style="color:#8B94A8">  销售趋势图（用纯 CSS 实现）、商品列表、AI 推荐模块。</div>
+      <div style="color:#8B94A8">  配色方案：主色 #7C6AF7，背景白色，字体系统默认。</div>
+      <div style="height:8px"></div>
+      <div style="color:#A78BFA">✦ Claude: 正在生成 01-dashboard.html...</div>
+      <div style="color:#A78BFA">  分析需求结构 ✓</div>
+      <div style="color:#A78BFA">  生成 HTML 骨架 ✓</div>
+      <div style="color:#A78BFA">  添加 CSS 样式 ✓</div>
+      <div style="color:#22C55E">✓ 已写入 prototypes/01-dashboard.html (4.2KB)</div>
+      <div style="height:8px"></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="color:#22C55E">❯ </span>
+        <span style="display:inline-block;width:8px;height:14px;background:#22C55E;border-radius:1px;animation:blink .8s infinite"></span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+let termOpen = false;
+function toggleTerminal(){
+  termOpen = !termOpen;
+  document.getElementById('terminal').classList.toggle('collapsed', !termOpen);
+  document.getElementById('term-toggle-btn').textContent = termOpen ? '▼ 收起' : '▲ 展开';
+}
+
+function toggleFolder(id){
+  document.getElementById(id).classList.toggle('open');
+}
+
+const files = {
+  'dashboard':  {url:'prototypes/01-dashboard.html', label:'01-dashboard.html · 存档：v1-客户确认'},
+  'login':      {url:'prototypes/02-login.html', label:'02-login.html'},
+  'products':   {url:'prototypes/03-products.html', label:'03-products.html'},
+  'cart':       {url:'prototypes/04-cart.html', label:'04-cart.html'},
+  'checkout':   {url:'prototypes/05-checkout.html', label:'05-checkout.html'},
+  'v1-dashboard':{url:'archived/v1-dashboard.html', label:'v1-dashboard.html（存档）'},
+};
+
+function loadFile(name){
+  document.querySelectorAll('.tree-file').forEach(f=>f.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  const f = files[name];
+  if(f){
+    document.getElementById('browser-url').textContent = 'file:///Developer/ai-ecommerce/'+f.url;
+    document.getElementById('file-info').textContent = f.label;
+  }
+}
+
+function reloadPreview(){
+  const bc = document.getElementById('browser-content');
+  bc.style.opacity = '0.5';
+  setTimeout(()=>bc.style.opacity='1', 400);
+}
+
+function saveVersion(){
+  const label = prompt('输入版本标签（如：v2-修改后）：', 'v2-客户二次确认');
+  if(label) alert(`已存档：${label}`);
+}
+
+function togglePromptPanel(){
+  toggleTerminal();
+}
+
+function newFile(){
+  const name = prompt('新建原型文件名：', '06-new-page.html');
+  if(!name) return;
+  const tree = document.querySelector('.tree-children');
+  const div = document.createElement('div');
+  div.className = 'tree-file';
+  div.innerHTML = `<span class="tree-file-icon">🌐</span><span class="tree-file-name">${name}</span>`;
+  div.onclick = ()=>loadFile('new');
+  tree.appendChild(div);
+}
+
+// Style for cursor blink
+const style = document.createElement('style');
+style.textContent = '@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}';
+document.head.appendChild(style);
+</script>
+</body>
+</html>

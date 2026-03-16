@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Workflow — 任务看板</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0A0C0F;--surface:#111318;--elevated:#181C22;--hover:#1E2230;
+  --b0:rgba(255,255,255,0.05);--b1:rgba(255,255,255,0.08);--b2:rgba(255,255,255,0.13);
+  --t1:#E2E6EE;--t2:#8B94A8;--t3:#4A5468;
+  --accent:#7C6AF7;--accent-d:rgba(124,106,247,0.12);--accent-g:rgba(124,106,247,0.25);
+  --neon:#00E5FF;--ok:#22C55E;--warn:#F59E0B;--danger:#F43F5E;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',-apple-system,sans-serif;
+  --r:10px;--rl:14px
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--t1);height:100vh;overflow:hidden;display:flex}
+
+.sidebar{width:220px;min-width:220px;background:rgba(14,16,20,0.92);backdrop-filter:blur(24px);border-right:1px solid var(--b0);display:flex;flex-direction:column;padding:14px 10px}
+.sb-logo{display:flex;align-items:center;gap:9px;padding:6px 8px;margin-bottom:14px}
+.sb-logo-icon{width:30px;height:30px;background:linear-gradient(135deg,#7C6AF7,#A78BFA);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 0 14px rgba(124,106,247,0.35)}
+.sb-logo-text{font-size:14px;font-weight:700;letter-spacing:-.3px}
+.sb-project{background:var(--elevated);border:1px solid var(--b1);border-radius:var(--r);padding:10px 12px;margin-bottom:18px;cursor:pointer;transition:border-color .2s;text-decoration:none;display:block}
+.sb-project:hover{border-color:var(--b2)}
+.sb-proj-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);margin-bottom:4px}
+.sb-proj-name{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:6px}
+.sb-stage-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(124,106,247,0.12);border:1px solid rgba(124,106,247,0.25);color:var(--accent);font-size:10.5px;padding:2px 8px;border-radius:20px}
+.sb-stage-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 5px var(--accent)}
+.sb-nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.sb-nav-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);padding:8px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--t2);text-decoration:none;transition:background .15s,color .15s}
+.nav-item:hover{background:var(--hover);color:var(--t1)}
+.nav-item.active{background:var(--accent-d);color:var(--t1)}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.sb-footer{border-top:1px solid var(--b0);padding-top:10px;margin-top:8px}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:50px;border-bottom:1px solid var(--b0);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600;flex:1}
+.model-sel{background:var(--elevated);border:1px solid var(--b1);color:var(--t2);font-family:var(--mono);font-size:11.5px;padding:5px 10px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.model-dot{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.topbar-btn{background:var(--elevated);border:1px solid var(--b1);color:var(--t2);font-size:12px;padding:5px 12px;border-radius:7px;cursor:pointer;transition:all .2s;font-family:var(--sans)}
+.topbar-btn:hover{border-color:var(--b2);color:var(--t1)}
+.topbar-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* Content */
+.board-layout{flex:1;display:flex;overflow:hidden}
+
+/* Left panel - heatmap */
+.left-panel{width:30%;min-width:260px;max-width:340px;border-right:1px solid var(--b0);display:flex;flex-direction:column;overflow-y:auto;padding:20px 18px}
+.left-panel::-webkit-scrollbar{width:4px}
+.left-panel::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+
+.panel-label{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);margin-bottom:12px}
+.mini-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.ms-card{background:var(--surface);border:1px solid var(--b1);border-radius:10px;padding:12px 14px}
+.ms-val{font-size:22px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1}
+.ms-label{font-size:11px;color:var(--t3);margin-top:4px}
+
+.hm-section{background:var(--surface);border:1px solid var(--b1);border-radius:12px;padding:14px;margin-bottom:16px}
+.hm-title{font-size:12px;color:var(--t2);margin-bottom:10px;display:flex;justify-content:space-between}
+.hm-grid{display:grid;grid-template-rows:repeat(7,9px);grid-auto-flow:column;grid-auto-columns:9px;gap:2.5px;overflow-x:hidden;max-width:100%}
+.hm-cell{width:9px;height:9px;border-radius:2px;cursor:pointer;transition:transform .1s}
+.hm-cell:hover{transform:scale(1.4)}
+
+.filter-section{margin-bottom:16px}
+.filter-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.fchip{background:var(--elevated);border:1px solid var(--b1);color:var(--t2);font-size:11px;padding:4px 10px;border-radius:16px;cursor:pointer;transition:all .2s}
+.fchip:hover,.fchip.active{border-color:var(--accent);color:var(--t1);background:var(--accent-d)}
+
+.milestone-section{margin-bottom:8px}
+.ms-item{background:var(--surface);border:1px solid var(--b1);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
+.ms-item:hover{border-color:var(--b2)}
+.ms-item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.ms-item-name{font-size:12.5px;font-weight:600}
+.ms-progress-bar{background:var(--b1);border-radius:3px;height:4px;overflow:hidden;margin-bottom:4px}
+.ms-progress-fill{height:100%;border-radius:3px}
+.ms-progress-text{font-size:10.5px;font-family:var(--mono);color:var(--t3)}
+
+/* Right panel - tasks */
+.right-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.view-toolbar{height:46px;border-bottom:1px solid var(--b0);display:flex;align-items:center;padding:0 18px;gap:10px;flex-shrink:0}
+.view-toggle{display:flex;background:var(--elevated);border:1px solid var(--b1);border-radius:8px;overflow:hidden}
+.vt-btn{padding:5px 14px;font-size:12px;color:var(--t2);cursor:pointer;transition:all .15s}
+.vt-btn.active{background:var(--accent);color:#fff}
+.vt-btn:hover:not(.active){background:var(--hover);color:var(--t1)}
+.add-task-btn{background:var(--accent);border:none;color:#fff;font-family:var(--sans);font-size:12px;font-weight:600;padding:5px 14px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:5px}
+.add-task-btn:hover{opacity:.9}
+.view-filter{background:var(--elevated);border:1px solid var(--b1);color:var(--t2);font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:7px;cursor:pointer}
+
+/* Kanban */
+.kanban{flex:1;display:flex;gap:14px;padding:16px 18px;overflow-x:auto;align-items:flex-start}
+.kanban::-webkit-scrollbar{height:5px}
+.kanban::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+.kanban-col{min-width:240px;width:240px;display:flex;flex-direction:column;gap:10px}
+.col-header{display:flex;align-items:center;gap:8px;padding:4px 0 8px}
+.col-dot{width:8px;height:8px;border-radius:50%}
+.col-title{font-size:12px;font-weight:600;color:var(--t2)}
+.col-count{font-size:11px;font-family:var(--mono);background:var(--b1);color:var(--t3);padding:1px 7px;border-radius:10px}
+.task-card{background:var(--surface);border:1px solid var(--b1);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .2s}
+.task-card:hover{border-color:var(--b2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.task-title{font-size:13px;font-weight:500;line-height:1.45;margin-bottom:8px}
+.task-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.task-tag{font-size:10.5px;padding:2px 7px;border-radius:4px;font-weight:500}
+.task-footer{display:flex;align-items:center;justify-content:space-between}
+.task-time{font-size:11px;font-family:var(--mono);color:var(--t3)}
+.task-ai-badge{font-size:10px;background:var(--accent-d);border:1px solid rgba(124,106,247,.25);color:var(--accent);padding:2px 6px;border-radius:4px}
+
+/* List */
+.task-list{flex:1;overflow-y:auto;padding:12px 18px;display:none}
+.task-list::-webkit-scrollbar{width:5px}
+.task-list::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+.list-header{display:grid;grid-template-columns:40px 1fr 90px 80px 80px 70px;gap:8px;padding:6px 12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);border-bottom:1px solid var(--b0);margin-bottom:4px}
+.list-row{display:grid;grid-template-columns:40px 1fr 90px 80px 80px 70px;gap:8px;padding:10px 12px;border-radius:8px;align-items:center;cursor:pointer;transition:background .15s;border:1px solid transparent;margin-bottom:2px}
+.list-row:hover{background:var(--hover);border-color:var(--b1)}
+.row-num{font-size:11px;font-family:var(--mono);color:var(--t3)}
+.row-title{font-size:13px;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.status-pill{font-size:10.5px;padding:3px 9px;border-radius:12px;font-weight:500;white-space:nowrap;text-align:center}
+.row-time{font-size:11.5px;font-family:var(--mono);color:var(--t2)}
+.row-priority{font-size:11px;text-align:center}
+
+/* Task modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:flex-start;justify-content:flex-end;padding:0;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.task-modal{width:520px;height:100vh;background:var(--surface);border-left:1px solid var(--b1);display:flex;flex-direction:column;transform:translateX(20px);transition:transform .25s;overflow:hidden}
+.modal-overlay.show .task-modal{transform:translateX(0)}
+.modal-header{padding:20px 22px 16px;border-bottom:1px solid var(--b0);display:flex;align-items:flex-start;gap:12px}
+.modal-close{background:none;border:none;color:var(--t3);font-size:18px;cursor:pointer;padding:2px;transition:color .2s;flex-shrink:0}
+.modal-close:hover{color:var(--t1)}
+.modal-body{flex:1;overflow-y:auto;padding:20px 22px}
+.modal-body::-webkit-scrollbar{width:5px}
+.modal-body::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+.modal-section{margin-bottom:20px}
+.modal-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);margin-bottom:10px}
+.modal-desc{font-size:13px;color:var(--t2);line-height:1.7;background:var(--elevated);border-radius:8px;padding:12px 14px}
+.test-case{background:var(--elevated);border:1px solid var(--b1);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px}
+.tc-check{width:16px;height:16px;border-radius:4px;border:2px solid var(--b2);flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-top:1px;transition:all .2s}
+.tc-check.done{background:var(--ok);border-color:var(--ok);color:#fff;font-size:10px}
+.tc-text{font-size:12.5px;color:var(--t2);line-height:1.5}
+
+/* Execute panel */
+.exec-panel{background:var(--elevated);border:1px solid var(--b1);border-radius:10px;padding:16px}
+.exec-options{display:flex;gap:8px;margin-bottom:14px}
+.exec-opt{flex:1;background:var(--hover);border:1px solid var(--b1);border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:all .2s}
+.exec-opt:hover{border-color:var(--b2)}
+.exec-opt.sel{border-color:var(--accent);background:var(--accent-d)}
+.exec-opt-icon{font-size:20px;margin-bottom:5px}
+.exec-opt-title{font-size:12px;font-weight:600;margin-bottom:2px}
+.exec-opt-desc{font-size:10.5px;color:var(--t3)}
+.exec-btn{width:100%;background:var(--accent);color:#fff;border:none;font-family:var(--sans);font-size:13px;font-weight:600;padding:11px;border-radius:8px;cursor:pointer;transition:all .2s;box-shadow:0 3px 12px var(--accent-g)}
+.exec-btn:hover{opacity:.9;transform:translateY(-1px)}
+.exec-btn.green{background:var(--ok);box-shadow:0 3px 12px rgba(34,197,94,.25)}
+.timer-display{text-align:center;font-size:28px;font-weight:800;font-family:var(--mono);color:var(--neon);letter-spacing:2px;margin:10px 0;text-shadow:0 0 14px rgba(0,229,255,.4)}
+.timer-status{text-align:center;font-size:11px;color:var(--t3);margin-bottom:10px}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-icon">⚡</div>
+    <span class="sb-logo-text">AI Workflow</span>
+  </div>
+  <a href="./02-project-dashboard.html" class="sb-project">
+    <div class="sb-proj-label">当前项目</div>
+    <div class="sb-proj-name">AI 电商平台</div>
+    <div class="sb-stage-badge"><div class="sb-stage-dot"></div>任务开发</div>
+  </a>
+  <nav class="sb-nav">
+    <div class="sb-nav-label">工作流</div>
+    <a href="./03-requirements.html" class="nav-item"><span class="nav-icon">📋</span>需求分析</a>
+    <a href="./04-prototype-design.html" class="nav-item"><span class="nav-icon">🎨</span>原型设计</a>
+    <a href="./05-task-board.html" class="nav-item active"><span class="nav-icon">✅</span>任务看板</a>
+    <a href="./06-retrospective.html" class="nav-item"><span class="nav-icon">📊</span>复盘总结</a>
+  </nav>
+  <div class="sb-footer">
+    <a href="#" class="nav-item"><span class="nav-icon">⚙️</span>设置</a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <span class="topbar-title">任务看板</span>
+    <button class="topbar-btn primary" onclick="runMilestone()">▶ 运行里程碑 M2</button>
+    <div class="model-sel"><div class="model-dot"></div>claude-sonnet-4-6 ▾</div>
+  </div>
+
+  <div class="board-layout">
+    <!-- Left: Heatmap + Stats -->
+    <div class="left-panel">
+      <div class="panel-label">统计概览</div>
+      <div class="mini-stats">
+        <div class="ms-card">
+          <div class="ms-val ms-ok" style="color:var(--ok)">24</div>
+          <div class="ms-label">已完成任务</div>
+        </div>
+        <div class="ms-card">
+          <div class="ms-val" style="color:var(--warn)">8</div>
+          <div class="ms-label">进行中</div>
+        </div>
+        <div class="ms-card">
+          <div class="ms-val" style="color:var(--t3)">36</div>
+          <div class="ms-label">待处理</div>
+        </div>
+        <div class="ms-card">
+          <div class="ms-val" style="color:var(--accent)">68</div>
+          <div class="ms-label">全部任务</div>
+        </div>
+      </div>
+
+      <div class="panel-label">活跃度</div>
+      <div class="hm-section">
+        <div class="hm-title">
+          <span>任务活跃热力图</span>
+          <span style="font-family:var(--mono);font-size:10.5px">近 16 周</span>
+        </div>
+        <div class="hm-grid" id="mini-hm"></div>
+        <div style="display:flex;align-items:center;gap:4px;margin-top:8px;font-size:10px;color:var(--t3)">
+          <span>少</span>
+          <div style="width:9px;height:9px;border-radius:2px;background:rgba(255,255,255,0.06)"></div>
+          <div style="width:9px;height:9px;border-radius:2px;background:rgba(0,229,255,0.2)"></div>
+          <div style="width:9px;height:9px;border-radius:2px;background:rgba(0,229,255,0.5)"></div>
+          <div style="width:9px;height:9px;border-radius:2px;background:#00E5FF"></div>
+          <span>多</span>
+        </div>
+      </div>
+
+      <div class="panel-label">里程碑</div>
+      <div class="milestone-section">
+        <div class="ms-item">
+          <div class="ms-item-header">
+            <span class="ms-item-name">M1 基础框架</span>
+            <span style="font-size:10px;color:var(--ok);font-weight:600">完成 ✓</span>
+          </div>
+          <div class="ms-progress-bar"><div class="ms-progress-fill" style="width:100%;background:var(--ok)"></div></div>
+          <div class="ms-progress-text">12 / 12 tasks</div>
+        </div>
+        <div class="ms-item" style="border-color:var(--accent)">
+          <div class="ms-item-header">
+            <span class="ms-item-name">M2 核心功能</span>
+            <span style="font-size:10px;color:var(--warn);font-weight:600">进行中</span>
+          </div>
+          <div class="ms-progress-bar"><div class="ms-progress-fill" style="width:53%;background:linear-gradient(90deg,var(--accent),var(--neon))"></div></div>
+          <div class="ms-progress-text">8 / 15 tasks</div>
+        </div>
+        <div class="ms-item">
+          <div class="ms-item-header">
+            <span class="ms-item-name">M3 AI 模块</span>
+            <span style="font-size:10px;color:var(--t3)">待开始</span>
+          </div>
+          <div class="ms-progress-bar"><div class="ms-progress-fill" style="width:0%;background:var(--accent)"></div></div>
+          <div class="ms-progress-text">0 / 20 tasks</div>
+        </div>
+        <div class="ms-item">
+          <div class="ms-item-header">
+            <span class="ms-item-name">M4 优化上线</span>
+            <span style="font-size:10px;color:var(--t3)">待开始</span>
+          </div>
+          <div class="ms-progress-bar"><div class="ms-progress-fill" style="width:0%;background:var(--accent)"></div></div>
+          <div class="ms-progress-text">0 / 21 tasks</div>
+        </div>
+      </div>
+
+      <div class="panel-label">筛选</div>
+      <div class="filter-chips">
+        <div class="fchip active" onclick="this.classList.toggle('active')">全部</div>
+        <div class="fchip" onclick="this.classList.toggle('active')">M2</div>
+        <div class="fchip" onclick="this.classList.toggle('active')">AI 任务</div>
+        <div class="fchip" onclick="this.classList.toggle('active')">高优先级</div>
+        <div class="fchip" onclick="this.classList.toggle('active')">我的</div>
+      </div>
+    </div>
+
+    <!-- Right: Task Board -->
+    <div class="right-panel">
+      <div class="view-toolbar">
+        <div class="view-toggle">
+          <div class="vt-btn active" id="vt-kanban" onclick="switchView('kanban')">看板</div>
+          <div class="vt-btn" id="vt-list" onclick="switchView('list')">列表</div>
+        </div>
+        <select class="view-filter">
+          <option>M2 核心功能</option>
+          <option>M1 基础框架</option>
+          <option>全部里程碑</option>
+        </select>
+        <div style="flex:1"></div>
+        <button class="add-task-btn" onclick="showTaskModal(null)">＋ 新建任务</button>
+      </div>
+
+      <!-- Kanban view -->
+      <div class="kanban" id="kanban-view">
+        <!-- Todo -->
+        <div class="kanban-col">
+          <div class="col-header">
+            <div class="col-dot" style="background:var(--t3)"></div>
+            <span class="col-title">待处理</span>
+            <span class="col-count">7</span>
+          </div>
+          <div class="task-card" onclick="showTaskModal('t1')">
+            <div class="task-title">接入 Redis 缓存层，优化商品列表接口响应</div>
+            <div class="task-tags">
+              <span class="task-tag" style="background:rgba(124,106,247,0.15);color:#A78BFA">后端</span>
+              <span class="task-tag" style="background:rgba(245,158,11,0.12);color:var(--warn)">高优</span>
+            </div>
+            <div class="task-footer">
+              <span class="task-time">预计 2h</span>
+              <span class="task-ai-badge">⚡ AI</span>
+            </div>
+          </div>
+          <div class="task-card" onclick="showTaskModal('t2')">
+            <div class="task-title">实现用户行为数据埋点，支持点击/浏览/加购事件</div>
+            <div class="task-tags">
+              <span class="task-tag" style="background:rgba(56,189,248,0.12);color:#38BDF8">前端</span>
+              <span class="task-tag" style="background:rgba(124,106,247,0.15);color:#A78BFA">后端</span>
+            </div>
+            <div class="task-footer">
+              <span class="task-time">预计 4h</span>
+              <span class="task-ai-badge">⚡ AI</span>
+            </div>
+          </div>
+          <div class="task-card" onclick="showTaskModal('t3')">
+            <div class="task-title">设计订单状态流转数据库表结构</div>
+            <div class="task-tags">
+              <span class="task-tag" style="background:rgba(34,197,94,0.12);color:var(--ok)">数据库</span>
+            </div>
+            <div class="task-footer">
+              <span class="task-time">预计 1.5h</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- In Progress -->
+        <div class="kanban-col">
+          <div class="col-header">
+            <div class="col-dot" style="background:var(--warn)"></div>
+            <span class="col-title">进行中</span>
+            <span class="col-count">4</span>
+          </div>
+          <div class="task-card" style="border-color:rgba(245,158,11,.25)" onclick="showTaskModal('t4')">
+            <div class="task-title">开发商品详情页 — 图片展示 + 规格选择组件</div>
+            <div class="task-tags">
+              <span class="task-tag" style="background:rgba(56,189,248,0.12);color:#38BDF8">前端</span>
+              <span class="task-tag" style="background:rgba(245,158,11,0.12);color:var(--warn)">高优</span>
+            </div>
+            <div class="task-footer">
+              <span class="task-time">已用 1.5h / 3h</span>
+              <span class="task-ai-badge">⚡ AI</span>
+            </div>
+          </div>
+          <div class="task-card" style="border-color:rgba(245,158,11,.25)" onclick="showTaskModal('t5')">
+            <div class="task-title">实现购物车 API — 增删改查 + 库存校验</div>
+            <div class="task-tags">
+              <span class="task-tag" style="background:rgba(124,106,247,0.15);color:#A78BFA">后端</span>
+            </div>
+            <div class="task-footer">
+              <span class="task-time">已用 0.5h / 2h</span>
+              <span class="task-ai-badge">⚡ AI</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Done -->
+        <div class="kanban-col">
+          <div class="col-header">
+            <div class="col-dot" style="background:var(--ok)"></div>
+            <span class="col-title">已完成</span>
+            <span class="col-count">8</span>
+          </div>
+          <div class="task-card" style="opacity:.7" onclick="showTaskModal('t6')">
+            <div class="task-title">搭建 Vue 3 + Vite 项目脚手架，配置 ESLint + Prettier</div>
+            <div class="task-tags">
+              <span class="task-tag" style="background:rgba(34,197,94,0.12);color:var(--ok)">完成</span>
+            </div>
+            <div class="task-footer">
+              <span class="task-time">用时 1h 20min</span>
+              <span class="task-ai-badge">⚡ AI</span>
+            </div>
+          </div>
+          <div class="task-card" style="opacity:.7" onclick="showTaskModal('t7')">
+            <div class="task-title">配置 Spring Boot 项目结构 + PostgreSQL 连接</div>
+            <div class="task-tags">
+              <span class="task-tag" style="background:rgba(34,197,94,0.12);color:var(--ok)">完成</span>
+            </div>
+            <div class="task-footer">
+              <span class="task-time">用时 45min</span>
+              <span class="task-ai-badge">⚡ AI</span>
+            </div>
+          </div>
+          <div class="task-card" style="opacity:.7" onclick="showTaskModal('t8')">
+            <div class="task-title">设计用户认证模块 — JWT + Refresh Token 机制</div>
+            <div class="task-tags">
+              <span class="task-tag" style="background:rgba(34,197,94,0.12);color:var(--ok)">完成</span>
+            </div>
+            <div class="task-footer">
+              <span class="task-time">用时 2h 10min</span>
+              <span class="task-ai-badge">⚡ AI</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- List view (hidden by default) -->
+      <div class="task-list" id="list-view">
+        <div class="list-header">
+          <span>#</span><span>任务名称</span><span>状态</span><span>优先级</span><span>预计时长</span><span>操作</span>
+        </div>
+        <div class="list-row" onclick="showTaskModal('t4')">
+          <span class="row-num">M2-05</span>
+          <span class="row-title">开发商品详情页 — 图片展示 + 规格选择组件</span>
+          <span><span class="status-pill" style="background:rgba(245,158,11,.15);color:var(--warn)">进行中</span></span>
+          <span class="row-priority">🔴 高</span>
+          <span class="row-time">3h</span>
+          <span><span class="task-ai-badge">⚡ AI</span></span>
+        </div>
+        <div class="list-row" onclick="showTaskModal('t5')">
+          <span class="row-num">M2-06</span>
+          <span class="row-title">实现购物车 API — 增删改查 + 库存校验</span>
+          <span><span class="status-pill" style="background:rgba(245,158,11,.15);color:var(--warn)">进行中</span></span>
+          <span class="row-priority">🔴 高</span>
+          <span class="row-time">2h</span>
+          <span><span class="task-ai-badge">⚡ AI</span></span>
+        </div>
+        <div class="list-row" onclick="showTaskModal('t1')">
+          <span class="row-num">M2-07</span>
+          <span class="row-title">接入 Redis 缓存层，优化商品列表接口响应</span>
+          <span><span class="status-pill" style="background:rgba(74,84,104,.3);color:var(--t2)">待处理</span></span>
+          <span class="row-priority">🟡 中</span>
+          <span class="row-time">2h</span>
+          <span><span class="task-ai-badge">⚡ AI</span></span>
+        </div>
+        <div class="list-row" onclick="showTaskModal('t2')">
+          <span class="row-num">M2-08</span>
+          <span class="row-title">实现用户行为数据埋点，支持点击/浏览/加购事件</span>
+          <span><span class="status-pill" style="background:rgba(74,84,104,.3);color:var(--t2)">待处理</span></span>
+          <span class="row-priority">🟡 中</span>
+          <span class="row-time">4h</span>
+          <span><span class="task-ai-badge">⚡ AI</span></span>
+        </div>
+        <div class="list-row" onclick="showTaskModal('t6')">
+          <span class="row-num">M1-01</span>
+          <span class="row-title">搭建 Vue 3 + Vite 项目脚手架，配置 ESLint + Prettier</span>
+          <span><span class="status-pill" style="background:rgba(34,197,94,.15);color:var(--ok)">已完成</span></span>
+          <span class="row-priority">🔴 高</span>
+          <span class="row-time">1h</span>
+          <span><span class="task-ai-badge">⚡ AI</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Task Detail Modal -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="task-modal">
+    <div class="modal-header">
+      <div style="flex:1">
+        <div style="font-size:10px;font-family:var(--mono);color:var(--t3);margin-bottom:5px">M2 · 前端 · 高优先级</div>
+        <div style="font-size:16px;font-weight:700;line-height:1.4" id="modal-title">开发商品详情页 — 图片展示 + 规格选择组件</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-section">
+        <div class="modal-section-title">任务描述</div>
+        <div class="modal-desc" id="modal-desc">
+          实现电商商品详情页的核心交互组件：<br><br>
+          1. 商品主图展示区：支持多图切换、缩略图导航、图片放大预览<br>
+          2. SKU 规格选择器：颜色/尺码矩阵、库存状态实时显示<br>
+          3. 价格展示区：划线价、活动价、优惠标签<br>
+          4. 加购 / 立即购买按钮：防重复提交、加载状态
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">验收测试用例</div>
+        <div class="test-case">
+          <div class="tc-check done" onclick="this.classList.toggle('done')">✓</div>
+          <div class="tc-text">切换商品主图时，缩略图高亮同步更新，响应时间 &lt; 100ms</div>
+        </div>
+        <div class="test-case">
+          <div class="tc-check done" onclick="this.classList.toggle('done')">✓</div>
+          <div class="tc-text">选择规格后，价格和库存状态实时更新，无需刷新页面</div>
+        </div>
+        <div class="test-case">
+          <div class="tc-check" onclick="this.classList.toggle('done')"></div>
+          <div class="tc-text">点击「加入购物车」后出现成功气泡提示，购物车数量 +1</div>
+        </div>
+        <div class="test-case">
+          <div class="tc-check" onclick="this.classList.toggle('done')"></div>
+          <div class="tc-text">缺货规格显示置灰状态，无法点击，且有文字说明</div>
+        </div>
+        <div class="test-case">
+          <div class="tc-check" onclick="this.classList.toggle('done')"></div>
+          <div class="tc-text">移动端适配：规格选择器在 375px 宽度下正常显示</div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">执行方式</div>
+        <div class="exec-panel">
+          <div class="exec-options">
+            <div class="exec-opt sel" id="exec-ai" onclick="selectExec('ai')">
+              <div class="exec-opt-icon">⚡</div>
+              <div class="exec-opt-title">AI 自动执行</div>
+              <div class="exec-opt-desc">Claude 自动生成代码并写入项目</div>
+            </div>
+            <div class="exec-opt" id="exec-manual" onclick="selectExec('manual')">
+              <div class="exec-opt-icon">👤</div>
+              <div class="exec-opt-title">手动执行</div>
+              <div class="exec-opt-desc">自行完成，计时记录用时</div>
+            </div>
+          </div>
+          <div id="timer-section">
+            <div class="timer-display" id="timer">00:00:00</div>
+            <div class="timer-status" id="timer-status">准备就绪</div>
+            <button class="exec-btn" id="exec-btn" onclick="toggleExec()">▶ 开始执行</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Heatmap
+const hm = document.getElementById('mini-hm');
+const WEEKS = 16;
+const colors = ['rgba(255,255,255,0.06)','rgba(0,229,255,0.18)','rgba(0,229,255,0.42)','rgba(0,229,255,0.72)','#00E5FF'];
+for(let w=0;w<WEEKS;w++){
+  for(let d=0;d<7;d++){
+    const c = document.createElement('div');
+    c.className='hm-cell';
+    const r = Math.random();
+    let lvl = r>0.55 ? Math.ceil(Math.random()*4) : 0;
+    if(w>12 && Math.random()>0.25) lvl=Math.max(lvl,2);
+    c.style.background=colors[lvl];
+    hm.appendChild(c);
+  }
+}
+
+// View toggle
+function switchView(v){
+  document.getElementById('kanban-view').style.display = v==='kanban'?'flex':'none';
+  document.getElementById('list-view').style.display = v==='list'?'flex':'none';
+  document.getElementById('vt-kanban').classList.toggle('active',v==='kanban');
+  document.getElementById('vt-list').classList.toggle('active',v==='list');
+}
+
+// Modal
+function showTaskModal(id){
+  document.getElementById('modal').classList.add('show');
+  // Reset timer
+  stopTimer();
+  timerSecs=0;
+  updateTimerDisplay();
+  document.getElementById('exec-btn').textContent='▶ 开始执行';
+  document.getElementById('exec-btn').className='exec-btn';
+}
+function closeModal(){
+  document.getElementById('modal').classList.remove('show');
+  stopTimer();
+}
+
+// Exec mode
+function selectExec(m){
+  document.getElementById('exec-ai').classList.toggle('sel',m==='ai');
+  document.getElementById('exec-manual').classList.toggle('sel',m==='manual');
+  document.getElementById('exec-btn').textContent = m==='ai'?'▶ AI 自动执行':'▶ 开始计时';
+  document.getElementById('exec-btn').className = m==='ai'?'exec-btn':'exec-btn green';
+}
+
+// Timer
+let timerInterval=null, timerSecs=0, running=false;
+function toggleExec(){
+  if(!running){
+    running=true;
+    timerInterval=setInterval(()=>{
+      timerSecs++;
+      updateTimerDisplay();
+    },1000);
+    document.getElementById('exec-btn').textContent='⏸ 暂停';
+    document.getElementById('timer-status').textContent='执行中...';
+  } else {
+    stopTimer();
+    document.getElementById('exec-btn').textContent='▶ 继续执行';
+    document.getElementById('timer-status').textContent='已暂停';
+  }
+}
+function stopTimer(){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  running=false;
+}
+function updateTimerDisplay(){
+  const h=Math.floor(timerSecs/3600),m=Math.floor(timerSecs%3600/60),s=timerSecs%60;
+  document.getElementById('timer').textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function runMilestone(){
+  alert('AI 自动执行模式已启动\n里程碑 M2 将按任务顺序依次执行，遇到不确定情况会暂停并询问。');
+}
+</script>
+</body>
+</html>

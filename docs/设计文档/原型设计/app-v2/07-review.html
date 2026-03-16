@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Workflow — 复盘总结</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #FFFFFF; --surface: #F5F7FA; --border: #E1E4E8;
+      --text-1: #0D1117; --text-2: #6E7781; --text-3: #B1BAC4;
+      --accent: #007AFF; --accent-bg: #EBF5FF; --hover: #F6F8FA;
+      --r: 12px; --r-sm: 8px; --r-xs: 6px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    body {
+      font-family: var(--font); background: #1C1C1E;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+    .app {
+      width: 1280px; height: 800px; background: var(--bg);
+      border-radius: 14px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.06);
+      overflow: hidden; display: flex; flex-direction: column;
+    }
+    .titlebar {
+      height: 40px; background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 16px; flex-shrink: 0; user-select: none;
+    }
+    .wc { display: flex; gap: 8px; }
+    .wc-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .wc-dot.r { background: #FF5F57; } .wc-dot.y { background: #FEBC2E; } .wc-dot.g { background: #28C840; }
+    .titlebar-center { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .t-ws { font-size: 13px; color: var(--text-2); }
+    .t-sep { font-size: 13px; color: var(--text-3); }
+    .t-proj { font-size: 13px; color: var(--text-1); font-weight: 500; }
+    .layout { flex: 1; display: flex; overflow: hidden; }
+    /* Sidebar */
+    .sidebar {
+      width: 208px; background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; flex-shrink: 0;
+    }
+    .sb-head { padding: 18px 14px 14px; border-bottom: 1px solid var(--border); }
+    .sb-logo { display: flex; align-items: center; gap: 9px; }
+    .logo-mark { width: 26px; height: 26px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+    .logo-name { font-size: 13.5px; font-weight: 600; color: var(--text-1); }
+    .sb-project { margin-top: 10px; }
+    .sp-label { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
+    .sp-name { font-size: 12.5px; color: var(--text-1); font-weight: 500; display: flex; align-items: center; gap: 4px; }
+    .sp-badge { font-size: 10px; padding: 1px 6px; border-radius: 100px; background: var(--accent-bg); color: var(--accent); font-weight: 500; }
+    .sb-nav { flex: 1; padding: 8px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: var(--r-xs);
+      cursor: pointer; transition: background 0.1s; text-decoration: none; color: var(--text-2); font-size: 13px; margin-bottom: 2px;
+    }
+    .nav-item:hover { background: var(--hover); color: var(--text-1); }
+    .nav-item.active { background: var(--accent-bg); color: var(--accent); }
+    .nav-icon { flex-shrink: 0; width: 16px; height: 16px; }
+    .sb-footer { padding: 8px; border-top: 1px solid var(--border); }
+    /* Main */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .topbar {
+      height: 48px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; gap: 8px; flex-shrink: 0;
+    }
+    .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+    .bc-sep { color: var(--text-3); } .bc-item { color: var(--text-2); } .bc-current { color: var(--text-1); font-weight: 500; }
+    .topbar-actions { margin-left: auto; display: flex; gap: 8px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: var(--r-xs);
+      font-size: 12.5px; font-weight: 500; font-family: var(--font);
+      cursor: pointer; border: 1px solid transparent; transition: all 0.1s;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: #0062CC; }
+    .btn-ghost { background: white; color: var(--text-2); border-color: var(--border); }
+    .btn-ghost:hover { background: var(--hover); color: var(--text-1); }
+    /* Content */
+    .content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+    .content-title { font-size: 20px; font-weight: 600; color: var(--text-1); letter-spacing: -0.4px; margin-bottom: 6px; }
+    .content-sub { font-size: 13px; color: var(--text-2); margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+    /* Summary stats */
+    .summary-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+    .stat-card { border: 1px solid var(--border); border-radius: var(--r); padding: 20px; }
+    .stat-icon { margin-bottom: 12px; }
+    .stat-value { font-size: 32px; font-weight: 600; color: var(--text-1); letter-spacing: -1px; line-height: 1; }
+    .stat-unit { font-size: 15px; font-weight: 400; color: var(--text-2); margin-left: 2px; }
+    .stat-label { font-size: 12.5px; color: var(--text-2); margin-top: 6px; }
+    .stat-delta { font-size: 11.5px; color: var(--text-3); margin-top: 3px; }
+    /* Two col */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    /* Prompts table */
+    .prompts-card { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .card-head {
+      padding: 14px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-head-title { font-size: 13px; font-weight: 600; color: var(--text-1); display: flex; align-items: center; gap: 8px; }
+    .prompt-table-head { display: flex; align-items: center; padding: 8px 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
+    .pt-col { font-size: 10.5px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; }
+    .prompt-row { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: pointer; }
+    .prompt-row:last-child { border-bottom: none; }
+    .prompt-row:hover { background: var(--hover); }
+    .pr-name { font-size: 13px; color: var(--text-1); font-weight: 500; }
+    .pr-module { font-size: 11.5px; color: var(--text-2); margin-top: 2px; }
+    .stars { display: flex; gap: 2px; }
+    .star { color: #FEBC2E; font-size: 13px; }
+    .star.empty { color: var(--border); }
+    .pr-uses { font-size: 12px; color: var(--text-2); }
+    .pr-tokens { font-size: 12px; color: var(--text-2); }
+    /* Phase summary */
+    .phase-card { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .phase-row {
+      display: flex; align-items: center; gap: 14px; padding: 13px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .phase-row:last-child { border-bottom: none; }
+    .phase-num { font-size: 11.5px; color: var(--text-3); width: 24px; }
+    .phase-info { flex: 1; }
+    .phase-name { font-size: 13px; font-weight: 500; color: var(--text-1); }
+    .phase-tasks { font-size: 11.5px; color: var(--text-2); margin-top: 2px; }
+    .phase-bar-wrap { width: 120px; height: 5px; background: var(--surface); border-radius: 3px; overflow: hidden; }
+    .phase-bar { height: 100%; background: var(--accent); border-radius: 3px; }
+    .phase-time { font-size: 12px; color: var(--text-2); width: 64px; text-align: right; }
+    .phase-status { font-size: 11px; padding: 2px 8px; border-radius: 100px; font-weight: 500; white-space: nowrap; }
+    .ps-done { background: var(--accent-bg); color: var(--accent); }
+    .ps-active { background: #FFF3E0; color: #E67E22; }
+    .ps-todo { background: var(--surface); color: var(--text-3); }
+    /* Full heatmap */
+    .heatmap-card { border: 1px solid var(--border); border-radius: var(--r); padding: 20px; }
+    .hc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .hc-title { font-size: 13px; font-weight: 600; color: var(--text-1); display: flex; align-items: center; gap: 8px; }
+    .hc-period { font-size: 11.5px; color: var(--text-3); }
+    .hm-month-labels { display: flex; margin-bottom: 4px; padding-left: 20px; }
+    .hm-month-label { font-size: 10px; color: var(--text-3); }
+    .hm-with-days { display: flex; gap: 4px; }
+    .day-labels { display: flex; flex-direction: column; gap: 3px; padding-top: 0; }
+    .day-label { font-size: 9.5px; color: var(--text-3); height: 11px; line-height: 11px; }
+    #fullHeatmap { display: flex; gap: 3px; }
+    .hm-col { display: flex; flex-direction: column; gap: 3px; }
+    .hm-cell { width: 11px; height: 11px; border-radius: 2px; background: #F0F2F5; cursor: pointer; transition: opacity 0.1s; }
+    .hm-cell:hover { opacity: 0.7; }
+    .hm-cell[data-v="1"] { background: #D0E8FF; }
+    .hm-cell[data-v="2"] { background: #90C4FF; }
+    .hm-cell[data-v="3"] { background: #4DA3FF; }
+    .hm-cell[data-v="4"] { background: #007AFF; }
+    .heatmap-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+    .hm-legend { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-3); }
+    .hm-legend-cell { width: 11px; height: 11px; border-radius: 2px; }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="titlebar">
+      <div class="wc"><div class="wc-dot r"></div><div class="wc-dot y"></div><div class="wc-dot g"></div></div>
+      <div class="titlebar-center">
+        <span class="t-ws">~/Developer</span><span class="t-sep">/</span><span class="t-proj">my-saas-project</span>
+      </div>
+      <div style="width:80px"></div>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sb-head">
+          <div class="sb-logo">
+            <div class="logo-mark">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 4.5V9.5L7 13L1 9.5V4.5L7 1Z" stroke="white" stroke-width="1" fill="none"/></svg>
+            </div>
+            <span class="logo-name">AI Workflow</span>
+          </div>
+          <div class="sb-project">
+            <div class="sp-label">当前项目</div>
+            <div class="sp-name">my-saas-project <span class="sp-badge">开发中</span></div>
+          </div>
+        </div>
+        <nav class="sb-nav">
+          <a href="03-project.html" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 7L8 2.5L14 7V14H10.5V10H5.5V14H2V7Z" stroke="#6E7781" stroke-width="1"/></svg>概览
+          </a>
+          <a href="04-requirements.html" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M4 2H10L13 5V14H4V2Z" stroke="#6E7781" stroke-width="1"/><path d="M10 2V5H13" stroke="#6E7781" stroke-width="1"/><path d="M6.5 8H10.5M6.5 11H9" stroke="#6E7781" stroke-width="1"/></svg>需求分析
+          </a>
+          <a href="05-prototype.html" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="1" stroke="#6E7781" stroke-width="1"/><path d="M2 6.5H14" stroke="#6E7781" stroke-width="1"/><circle cx="4.5" cy="4.75" r="0.75" fill="#6E7781"/><circle cx="7" cy="4.75" r="0.75" fill="#6E7781"/></svg>原型设计
+          </a>
+          <a href="06-tasks.html" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="3.5" height="12" rx="1" stroke="#6E7781" stroke-width="1"/><rect x="6.5" y="2" width="3.5" height="8" rx="1" stroke="#6E7781" stroke-width="1"/><rect x="11" y="2" width="3.5" height="10" rx="1" stroke="#6E7781" stroke-width="1"/></svg>任务看板
+          </a>
+          <a href="07-review.html" class="nav-item active">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 12L6 8.5L9 10.5L13 5" stroke="#007AFF" stroke-width="1"/><path d="M2 14H14" stroke="#007AFF" stroke-width="1"/></svg>复盘总结
+          </a>
+        </nav>
+        <div class="sb-footer">
+          <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="#6E7781" stroke-width="1"/><path d="M8 1.5V3M8 13V14.5M1.5 8H3M13 8H14.5" stroke="#6E7781" stroke-width="1"/></svg>设置
+          </a>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <main class="main">
+        <div class="topbar">
+          <div class="breadcrumb">
+            <span class="bc-item">my-saas-project</span><span class="bc-sep">/</span>
+            <span class="bc-current">复盘总结</span>
+          </div>
+          <div class="topbar-actions">
+            <button class="btn btn-ghost">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1V9M3 6L6 9L9 6" stroke="#6E7781" stroke-width="1"/><path d="M1 11H11" stroke="#6E7781" stroke-width="1"/></svg>
+              导出报告
+            </button>
+            <button class="btn btn-primary">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6C2 3.8 3.8 2 6 2C8.2 2 10 3.8 10 6" stroke="white" stroke-width="1"/><path d="M10 4V6H8" stroke="white" stroke-width="1"/></svg>
+              AI 生成总结
+            </button>
+          </div>
+        </div>
+
+        <div class="content">
+          <div class="content-title">项目复盘</div>
+          <div class="content-sub">
+            <span>My SaaS Project</span>
+            <span style="color:var(--text-3)">·</span>
+            <span>2024-01-10 — 2024-03-15（进行中）</span>
+            <span style="color:var(--text-3)">·</span>
+            <span style="color:var(--accent)">原型设计阶段</span>
+          </div>
+
+          <!-- Summary stats -->
+          <div class="summary-stats">
+            <div class="stat-card">
+              <div class="stat-icon">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M3 14L6.5 10L9 12L12.5 7.5L15 10" stroke="#B1BAC4" stroke-width="1"/>
+                  <path d="M2 16H16" stroke="#B1BAC4" stroke-width="1"/>
+                </svg>
+              </div>
+              <div class="stat-value">14<span class="stat-unit">/32</span></div>
+              <div class="stat-label">任务完成数</div>
+              <div class="stat-delta">完成率 43.7%，本周 +3</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <circle cx="9" cy="9" r="6.5" stroke="#B1BAC4" stroke-width="1"/>
+                  <path d="M9 5V9L11.5 11" stroke="#B1BAC4" stroke-width="1"/>
+                </svg>
+              </div>
+              <div class="stat-value">36<span class="stat-unit">h</span></div>
+              <div class="stat-label">项目总耗时</div>
+              <div class="stat-delta">日均 1.8h，本周 8.5h</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M2 4H16M2 4V14H16V4M2 4L4.5 1.5H9.5L11.5 4" stroke="#B1BAC4" stroke-width="1"/>
+                  <path d="M7 9L9 11L12 7.5" stroke="#B1BAC4" stroke-width="1"/>
+                </svg>
+              </div>
+              <div class="stat-value">128<span class="stat-unit">K</span></div>
+              <div class="stat-label">Token 总消耗</div>
+              <div class="stat-delta">≈ ¥4.2，input 92K / output 36K</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M3 3H15V11H11L9 14L7 11H3V3Z" stroke="#B1BAC4" stroke-width="1"/>
+                  <path d="M6 7H12M7.5 9.5H10.5" stroke="#B1BAC4" stroke-width="1"/>
+                </svg>
+              </div>
+              <div class="stat-value">18</div>
+              <div class="stat-label">提示词总数</div>
+              <div class="stat-delta">平均评分 ★ 4.2，最高 ★ 4.9</div>
+            </div>
+          </div>
+
+          <!-- Two col: Prompts + Phase -->
+          <div class="two-col">
+            <!-- Prompts table -->
+            <div class="prompts-card">
+              <div class="card-head">
+                <div class="card-head-title">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2H9L12 5V12H2V2Z" stroke="#B1BAC4" stroke-width="1"/><path d="M9 2V5H12" stroke="#B1BAC4" stroke-width="1"/><path d="M4.5 7H9.5M4.5 9.5H7.5" stroke="#B1BAC4" stroke-width="1"/></svg>
+                  提示词记录
+                </div>
+                <button class="btn btn-ghost" style="font-size:11.5px;padding:4px 10px">查看全部</button>
+              </div>
+              <div class="prompt-table-head">
+                <div class="pt-col" style="flex:1">名称</div>
+                <div class="pt-col" style="width:80px">评分</div>
+                <div class="pt-col" style="width:60px">使用次数</div>
+              </div>
+              <div class="prompt-row">
+                <div style="flex:1">
+                  <div class="pr-name">需求分析启动提示词</div>
+                  <div class="pr-module">需求分析</div>
+                </div>
+                <div style="width:80px">
+                  <div class="stars">
+                    <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+                  </div>
+                  <div style="font-size:10.5px;color:var(--text-3);margin-top:1px">4.9</div>
+                </div>
+                <div class="pr-uses" style="width:60px;text-align:center">8</div>
+              </div>
+              <div class="prompt-row">
+                <div style="flex:1">
+                  <div class="pr-name">Landing Page 原型生成</div>
+                  <div class="pr-module">原型设计</div>
+                </div>
+                <div style="width:80px">
+                  <div class="stars">
+                    <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span>
+                  </div>
+                  <div style="font-size:10.5px;color:var(--text-3);margin-top:1px">4.3</div>
+                </div>
+                <div class="pr-uses" style="width:60px;text-align:center">5</div>
+              </div>
+              <div class="prompt-row">
+                <div style="flex:1">
+                  <div class="pr-name">用户故事生成器</div>
+                  <div class="pr-module">需求分析</div>
+                </div>
+                <div style="width:80px">
+                  <div class="stars">
+                    <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span>
+                  </div>
+                  <div style="font-size:10.5px;color:var(--text-3);margin-top:1px">4.1</div>
+                </div>
+                <div class="pr-uses" style="width:60px;text-align:center">4</div>
+              </div>
+              <div class="prompt-row">
+                <div style="flex:1">
+                  <div class="pr-name">组件开发辅助</div>
+                  <div class="pr-module">任务执行</div>
+                </div>
+                <div style="width:80px">
+                  <div class="stars">
+                    <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span><span class="star empty">★</span>
+                  </div>
+                  <div style="font-size:10.5px;color:var(--text-3);margin-top:1px">3.6</div>
+                </div>
+                <div class="pr-uses" style="width:60px;text-align:center">3</div>
+              </div>
+              <div class="prompt-row">
+                <div style="flex:1">
+                  <div class="pr-name">API 文档生成模板</div>
+                  <div class="pr-module">任务执行</div>
+                </div>
+                <div style="width:80px">
+                  <div class="stars">
+                    <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span>
+                  </div>
+                  <div style="font-size:10.5px;color:var(--text-3);margin-top:1px">4.0</div>
+                </div>
+                <div class="pr-uses" style="width:60px;text-align:center">2</div>
+              </div>
+            </div>
+
+            <!-- Phase summary -->
+            <div class="phase-card">
+              <div class="card-head">
+                <div class="card-head-title">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 12L5 8.5L8 10.5L12 5" stroke="#B1BAC4" stroke-width="1"/><path d="M1.5 13H12.5" stroke="#B1BAC4" stroke-width="1"/></svg>
+                  各阶段完成情况
+                </div>
+              </div>
+              <div class="phase-row">
+                <span class="phase-num">01</span>
+                <div class="phase-info">
+                  <div class="phase-name">需求分析</div>
+                  <div class="phase-tasks">8 个任务</div>
+                </div>
+                <div class="phase-bar-wrap"><div class="phase-bar" style="width:100%"></div></div>
+                <div class="phase-time">12h 30m</div>
+                <span class="phase-status ps-done">已完成</span>
+              </div>
+              <div class="phase-row">
+                <span class="phase-num">02</span>
+                <div class="phase-info">
+                  <div class="phase-name">原型设计</div>
+                  <div class="phase-tasks">6 个任务 · 4/6</div>
+                </div>
+                <div class="phase-bar-wrap"><div class="phase-bar" style="width:67%"></div></div>
+                <div class="phase-time">18h 40m</div>
+                <span class="phase-status ps-active">进行中</span>
+              </div>
+              <div class="phase-row">
+                <span class="phase-num">03</span>
+                <div class="phase-info">
+                  <div class="phase-name">任务拆解</div>
+                  <div class="phase-tasks">— 个任务</div>
+                </div>
+                <div class="phase-bar-wrap"><div class="phase-bar" style="width:0%"></div></div>
+                <div class="phase-time">—</div>
+                <span class="phase-status ps-todo">未开始</span>
+              </div>
+              <div class="phase-row">
+                <span class="phase-num">04</span>
+                <div class="phase-info">
+                  <div class="phase-name">开发实现</div>
+                  <div class="phase-tasks">— 个任务</div>
+                </div>
+                <div class="phase-bar-wrap"><div class="phase-bar" style="width:0%"></div></div>
+                <div class="phase-time">—</div>
+                <span class="phase-status ps-todo">未开始</span>
+              </div>
+              <div class="phase-row" style="border-bottom:none">
+                <span class="phase-num">05</span>
+                <div class="phase-info">
+                  <div class="phase-name">复盘总结</div>
+                  <div class="phase-tasks">— 个任务</div>
+                </div>
+                <div class="phase-bar-wrap"><div class="phase-bar" style="width:0%"></div></div>
+                <div class="phase-time">—</div>
+                <span class="phase-status ps-todo">未开始</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Full project heatmap -->
+          <div class="heatmap-card">
+            <div class="hc-head">
+              <div class="hc-title">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="3.5" height="3.5" rx="0.5" stroke="#B1BAC4" stroke-width="1"/><rect x="6" y="1.5" width="3.5" height="3.5" rx="0.5" stroke="#B1BAC4" stroke-width="1"/><rect x="10.5" y="1.5" width="2" height="3.5" rx="0.5" stroke="#B1BAC4" stroke-width="1"/><rect x="1.5" y="6" width="3.5" height="3.5" rx="0.5" stroke="#B1BAC4" stroke-width="1"/><rect x="6" y="6" width="3.5" height="3.5" rx="0.5" stroke="#B1BAC4" stroke-width="1"/><rect x="1.5" y="10.5" width="3.5" height="2" rx="0.5" stroke="#B1BAC4" stroke-width="1"/><rect x="6" y="10.5" width="3.5" height="2" rx="0.5" stroke="#B1BAC4" stroke-width="1"/></svg>
+                项目全周期活跃度热力图
+                <span style="font-size:11px;color:var(--text-3);font-weight:400">· 过去 52 周</span>
+              </div>
+              <span class="hc-period">2023-03 — 2024-03</span>
+            </div>
+            <div style="overflow-x:auto">
+              <!-- Month labels -->
+              <div id="monthLabels" style="display:flex;gap:3px;padding-left:24px;margin-bottom:4px;font-size:10px;color:var(--text-3)"></div>
+              <div class="hm-with-days">
+                <div class="day-labels">
+                  <div class="day-label">Mon</div>
+                  <div class="day-label"></div>
+                  <div class="day-label">Wed</div>
+                  <div class="day-label"></div>
+                  <div class="day-label">Fri</div>
+                  <div class="day-label"></div>
+                  <div class="day-label">Sun</div>
+                </div>
+                <div id="fullHeatmap"></div>
+              </div>
+            </div>
+            <div class="heatmap-footer">
+              <span style="font-size:11px;color:var(--text-3)">共 24 次任务完成，38 次文件更新</span>
+              <div class="hm-legend">
+                <span>少</span>
+                <div class="hm-legend-cell" style="background:#F0F2F5"></div>
+                <div class="hm-legend-cell" style="background:#D0E8FF"></div>
+                <div class="hm-legend-cell" style="background:#90C4FF"></div>
+                <div class="hm-legend-cell" style="background:#4DA3FF"></div>
+                <div class="hm-legend-cell" style="background:#007AFF"></div>
+                <span>多</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Full heatmap
+    const container = document.getElementById('fullHeatmap');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthLabels = document.getElementById('monthLabels');
+    for (let w = 0; w < 52; w++) {
+      const col = document.createElement('div');
+      col.className = 'hm-col';
+      for (let d = 0; d < 7; d++) {
+        const cell = document.createElement('div');
+        cell.className = 'hm-cell';
+        const r = Math.random();
+        // Higher density in recent weeks (more activity recently)
+        const recencyBoost = w > 40 ? 0.3 : 0;
+        const v = r < (0.55 - recencyBoost) ? 0 : r < 0.68 ? 1 : r < 0.82 ? 2 : r < 0.93 ? 3 : 4;
+        if (v > 0) cell.dataset.v = v;
+        col.appendChild(cell);
+      }
+      container.appendChild(col);
+      // Month label every 4 weeks
+      if (w % 4 === 0) {
+        const label = document.createElement('div');
+        const mIdx = Math.floor(w / 4) % 12;
+        label.textContent = months[mIdx];
+        label.style.cssText = 'width:' + (11 * 4 + 3 * 4) + 'px;text-align:center';
+        monthLabels.appendChild(label);
+      }
+    }
+  </script>
+</body>
+</html>

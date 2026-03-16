@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Workflow — 原型设计</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #FFFFFF; --surface: #F5F7FA; --border: #E1E4E8;
+      --text-1: #0D1117; --text-2: #6E7781; --text-3: #B1BAC4;
+      --accent: #007AFF; --accent-bg: #EBF5FF; --hover: #F6F8FA;
+      --r: 12px; --r-sm: 8px; --r-xs: 6px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --mono: 'SF Mono', 'Cascadia Code', monospace;
+    }
+    body {
+      font-family: var(--font); background: #1C1C1E;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+    .app {
+      width: 1280px; height: 800px; background: var(--bg);
+      border-radius: 14px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.06);
+      overflow: hidden; display: flex; flex-direction: column;
+    }
+    .titlebar {
+      height: 40px; background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 16px;
+      flex-shrink: 0; user-select: none;
+    }
+    .wc { display: flex; gap: 8px; }
+    .wc-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .wc-dot.r { background: #FF5F57; } .wc-dot.y { background: #FEBC2E; } .wc-dot.g { background: #28C840; }
+    .titlebar-center { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .titlebar-ws { font-size: 13px; color: var(--text-2); }
+    .titlebar-sep { font-size: 13px; color: var(--text-3); }
+    .titlebar-proj { font-size: 13px; color: var(--text-1); font-weight: 500; }
+    .layout { flex: 1; display: flex; overflow: hidden; }
+    /* Sidebar */
+    .sidebar {
+      width: 208px; background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; flex-shrink: 0;
+    }
+    .sb-head { padding: 18px 14px 14px; border-bottom: 1px solid var(--border); }
+    .sb-logo { display: flex; align-items: center; gap: 9px; }
+    .logo-mark { width: 26px; height: 26px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+    .logo-name { font-size: 13.5px; font-weight: 600; color: var(--text-1); }
+    .sb-project { margin-top: 10px; }
+    .sb-project-label { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
+    .sb-project-name { font-size: 12.5px; color: var(--text-1); font-weight: 500; display: flex; align-items: center; gap: 4px; }
+    .sb-project-badge { font-size: 10px; padding: 1px 6px; border-radius: 100px; background: var(--accent-bg); color: var(--accent); font-weight: 500; }
+    .sb-nav { flex: 1; padding: 8px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 8px; border-radius: var(--r-xs);
+      cursor: pointer; transition: background 0.1s;
+      text-decoration: none; color: var(--text-2);
+      font-size: 13px; margin-bottom: 2px;
+    }
+    .nav-item:hover { background: var(--hover); color: var(--text-1); }
+    .nav-item.active { background: var(--accent-bg); color: var(--accent); }
+    .nav-icon { flex-shrink: 0; width: 16px; height: 16px; }
+    .sb-footer { padding: 8px; border-top: 1px solid var(--border); }
+    /* Main */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .topbar {
+      height: 48px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 20px; gap: 8px; flex-shrink: 0;
+    }
+    .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+    .bc-sep { color: var(--text-3); } .bc-item { color: var(--text-2); } .bc-current { color: var(--text-1); font-weight: 500; }
+    .topbar-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: var(--r-xs);
+      font-size: 12.5px; font-weight: 500; font-family: var(--font);
+      cursor: pointer; border: 1px solid transparent; transition: all 0.1s;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: #0062CC; }
+    .btn-ghost { background: white; color: var(--text-2); border-color: var(--border); }
+    .btn-ghost:hover { background: var(--hover); color: var(--text-1); }
+
+    /* Content split */
+    .content-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .work-area { flex: 1; display: flex; overflow: hidden; }
+
+    /* File panel */
+    .file-panel {
+      width: 240px; border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; flex-shrink: 0;
+      background: var(--surface);
+    }
+    .fp-head {
+      padding: 12px 14px 10px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .fp-title { font-size: 12px; font-weight: 600; color: var(--text-1); }
+    .fp-actions { display: flex; gap: 4px; }
+    .fp-btn {
+      width: 22px; height: 22px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border: none; background: transparent; color: var(--text-2);
+      transition: all 0.1s;
+    }
+    .fp-btn:hover { background: var(--hover); color: var(--text-1); }
+    .fp-body { flex: 1; overflow-y: auto; padding: 8px 6px; }
+    /* File tree */
+    .ftree-folder { margin-bottom: 2px; }
+    .ftree-folder-head {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 8px; border-radius: 5px;
+      cursor: pointer; transition: background 0.1s;
+      font-size: 12.5px; color: var(--text-1);
+    }
+    .ftree-folder-head:hover { background: var(--hover); }
+    .ftree-folder-icon { color: var(--text-3); transition: transform 0.15s; }
+    .ftree-folder-icon.open { transform: rotate(90deg); }
+    .ftree-folder-name { flex: 1; font-weight: 500; }
+    .ftree-children { padding-left: 18px; }
+    .ftree-file {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 8px; border-radius: 5px;
+      cursor: pointer; transition: background 0.1s;
+      font-size: 12.5px; color: var(--text-2);
+      margin-bottom: 1px;
+    }
+    .ftree-file:hover { background: var(--hover); color: var(--text-1); }
+    .ftree-file.active { background: var(--accent-bg); color: var(--accent); }
+    .ftree-file-icon { flex-shrink: 0; color: var(--text-3); }
+    .ftree-file.active .ftree-file-icon { color: var(--accent); }
+    .ftree-file-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ftree-file-ext { font-size: 10px; color: var(--text-3); font-weight: 500; }
+
+    /* Browser pane */
+    .browser-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .browser-bar {
+      height: 42px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 12px; gap: 8px;
+      background: var(--surface); flex-shrink: 0;
+    }
+    .browser-nav { display: flex; gap: 4px; }
+    .browser-nav-btn {
+      width: 24px; height: 24px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border: none; background: transparent; color: var(--text-3);
+      transition: all 0.1s;
+    }
+    .browser-nav-btn:hover { background: var(--hover); color: var(--text-2); }
+    .browser-url-bar {
+      flex: 1; display: flex; align-items: center;
+      background: white; border: 1px solid var(--border);
+      border-radius: var(--r-xs); padding: 0 10px; height: 28px; gap: 6px;
+    }
+    .browser-url-icon { color: var(--text-3); }
+    .browser-url { font-size: 12px; color: var(--text-2); flex: 1; }
+    .browser-actions { display: flex; gap: 4px; }
+    .browser-action-btn {
+      padding: 4px 8px; border-radius: 4px; font-size: 11.5px;
+      cursor: pointer; border: 1px solid var(--border); background: white;
+      color: var(--text-2); font-family: var(--font); transition: all 0.1s;
+    }
+    .browser-action-btn:hover { background: var(--hover); }
+    /* iframe area */
+    .browser-content {
+      flex: 1; overflow: hidden; position: relative;
+      background: #F0F2F5;
+    }
+    .browser-iframe-wrap {
+      width: 100%; height: 100%; overflow: hidden;
+      display: flex; align-items: flex-start; justify-content: center;
+      padding: 0;
+    }
+    .browser-frame {
+      width: 100%; height: 100%;
+      border: none;
+      background: white;
+    }
+    /* Preview mockup (shown when no iframe loads) */
+    .preview-mock {
+      width: 100%; height: 100%; overflow-y: auto;
+      padding: 0; background: white;
+    }
+    .mock-topbar {
+      background: #F5F7FA; border-bottom: 1px solid #E1E4E8;
+      padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 20px;
+    }
+    .mock-logo { font-size: 16px; font-weight: 700; color: #0D1117; }
+    .mock-nav { display: flex; gap: 20px; font-size: 13px; color: #6E7781; }
+    .mock-nav-active { color: #007AFF; font-weight: 500; }
+    .mock-hero { padding: 60px 48px 48px; text-align: center; border-bottom: 1px solid #E1E4E8; }
+    .mock-h1 { font-size: 40px; font-weight: 700; color: #0D1117; letter-spacing: -1px; margin-bottom: 16px; line-height: 1.2; }
+    .mock-sub { font-size: 16px; color: #6E7781; margin-bottom: 28px; }
+    .mock-cta { display: flex; gap: 12px; justify-content: center; }
+    .mock-btn-p { padding: 12px 28px; background: #007AFF; color: white; border-radius: 8px; font-size: 14px; font-weight: 500; }
+    .mock-btn-s { padding: 12px 28px; border: 1px solid #E1E4E8; border-radius: 8px; font-size: 14px; color: #0D1117; }
+    .mock-features { padding: 48px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .mock-feat { padding: 20px; border: 1px solid #E1E4E8; border-radius: 12px; }
+    .mock-feat-icon { width: 36px; height: 36px; background: #EBF5FF; border-radius: 8px; margin-bottom: 12px; }
+    .mock-feat-title { font-size: 14px; font-weight: 600; color: #0D1117; margin-bottom: 6px; }
+    .mock-feat-desc { font-size: 13px; color: #6E7781; line-height: 1.6; }
+
+    /* Terminal */
+    .terminal-panel { flex-shrink: 0; border-top: 1px solid var(--border); background: #161B22; display: flex; flex-direction: column; }
+    .terminal-panel.open { height: 180px; }
+    .terminal-panel.closed { height: 36px; }
+    .terminal-header { height: 36px; display: flex; align-items: center; padding: 0 14px; gap: 10px; border-bottom: 1px solid #30363D; cursor: pointer; flex-shrink: 0; }
+    .terminal-dot { width: 8px; height: 8px; border-radius: 50%; background: #28C840; }
+    .terminal-title { font-size: 12px; color: #8B949E; font-weight: 500; flex: 1; }
+    .terminal-body { flex: 1; overflow-y: auto; padding: 10px 16px; font-family: var(--mono); font-size: 12px; line-height: 1.7; }
+    .term-prompt { color: #58A6FF; }
+    .term-output { color: #8B949E; }
+    .term-success { color: #56D364; }
+    .term-cursor { display: inline-block; width: 7px; height: 12px; background: #58A6FF; animation: blink 1s step-end infinite; vertical-align: middle; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* Prompts overlay panel */
+    .prompts-overlay {
+      position: absolute; right: 12px; top: 12px;
+      width: 260px; background: white;
+      border: 1px solid var(--border); border-radius: var(--r);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+    .po-head { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 12.5px; font-weight: 600; color: var(--text-1); }
+    .po-body { padding: 8px 10px; }
+    .po-item { padding: 10px 10px; border-radius: 7px; cursor: pointer; transition: background 0.1s; margin-bottom: 4px; }
+    .po-item:hover { background: var(--hover); }
+    .po-item-label { font-size: 10.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+    .po-item-title { font-size: 12.5px; font-weight: 500; color: var(--text-1); }
+    .po-item-desc { font-size: 11.5px; color: var(--text-2); margin-top: 2px; line-height: 1.4; }
+
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .terminal-body::-webkit-scrollbar-thumb { background: #30363D; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="titlebar">
+      <div class="wc"><div class="wc-dot r"></div><div class="wc-dot y"></div><div class="wc-dot g"></div></div>
+      <div class="titlebar-center">
+        <span class="titlebar-ws">~/Developer</span>
+        <span class="titlebar-sep">/</span>
+        <span class="titlebar-proj">my-saas-project</span>
+      </div>
+      <div style="width:80px"></div>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sb-head">
+          <div class="sb-logo">
+            <div class="logo-mark">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M7 1L13 4.5V9.5L7 13L1 9.5V4.5L7 1Z" stroke="white" stroke-width="1" fill="none"/>
+              </svg>
+            </div>
+            <span class="logo-name">AI Workflow</span>
+          </div>
+          <div class="sb-project">
+            <div class="sb-project-label">当前项目</div>
+            <div class="sb-project-name">my-saas-project <span class="sb-project-badge">开发中</span></div>
+          </div>
+        </div>
+        <nav class="sb-nav">
+          <a href="03-project.html" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 7L8 2.5L14 7V14H10.5V10H5.5V14H2V7Z" stroke="#6E7781" stroke-width="1"/></svg>
+            概览
+          </a>
+          <a href="04-requirements.html" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+              <path d="M4 2H10L13 5V14H4V2Z" stroke="#6E7781" stroke-width="1"/>
+              <path d="M10 2V5H13" stroke="#6E7781" stroke-width="1"/>
+              <path d="M6.5 8H10.5M6.5 11H9" stroke="#6E7781" stroke-width="1"/>
+            </svg>
+            需求分析
+          </a>
+          <a href="05-prototype.html" class="nav-item active">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="3" width="12" height="10" rx="1" stroke="#007AFF" stroke-width="1"/>
+              <path d="M2 6.5H14" stroke="#007AFF" stroke-width="1"/>
+              <circle cx="4.5" cy="4.75" r="0.75" fill="#007AFF"/>
+              <circle cx="7" cy="4.75" r="0.75" fill="#007AFF"/>
+            </svg>
+            原型设计
+          </a>
+          <a href="06-tasks.html" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="2" width="3.5" height="12" rx="1" stroke="#6E7781" stroke-width="1"/>
+              <rect x="6.5" y="2" width="3.5" height="8" rx="1" stroke="#6E7781" stroke-width="1"/>
+              <rect x="11" y="2" width="3.5" height="10" rx="1" stroke="#6E7781" stroke-width="1"/>
+            </svg>
+            任务看板
+          </a>
+          <a href="07-review.html" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+              <path d="M3 12L6 8.5L9 10.5L13 5" stroke="#6E7781" stroke-width="1"/>
+              <path d="M2 14H14" stroke="#6E7781" stroke-width="1"/>
+            </svg>
+            复盘总结
+          </a>
+        </nav>
+        <div class="sb-footer">
+          <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="2.5" stroke="#6E7781" stroke-width="1"/>
+              <path d="M8 1.5V3M8 13V14.5M1.5 8H3M13 8H14.5" stroke="#6E7781" stroke-width="1"/>
+            </svg>
+            设置
+          </a>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <main class="main">
+        <div class="topbar">
+          <div class="breadcrumb">
+            <span class="bc-item">my-saas-project</span>
+            <span class="bc-sep">/</span>
+            <span class="bc-current">原型设计</span>
+          </div>
+          <div class="topbar-actions">
+            <button class="btn btn-ghost">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M6 2V10M2 6H10" stroke="#6E7781" stroke-width="1"/>
+              </svg>
+              新建文件
+            </button>
+            <button class="btn btn-ghost" onclick="togglePrompts()">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 2H10V7H7.5L6 9.5L4.5 7H2V2Z" stroke="#6E7781" stroke-width="1"/>
+              </svg>
+              提示词
+            </button>
+            <button class="btn btn-primary" onclick="toggleTerminal()">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <rect x="1" y="1" width="10" height="10" rx="1" stroke="white" stroke-width="1"/>
+                <path d="M3 4.5L5.5 7L3 9.5M6 9H9" stroke="white" stroke-width="1"/>
+              </svg>
+              终端
+            </button>
+          </div>
+        </div>
+
+        <div class="content-wrap">
+          <div class="work-area">
+            <!-- File tree panel -->
+            <div class="file-panel">
+              <div class="fp-head">
+                <span class="fp-title">原型文件</span>
+                <div class="fp-actions">
+                  <button class="fp-btn" title="新建文件">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2V10M2 6H10" stroke="#6E7781" stroke-width="1"/></svg>
+                  </button>
+                  <button class="fp-btn" title="新建文件夹">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3H11V9H1V3ZM1 3L2.5 1.5H5.5L6.5 3" stroke="#6E7781" stroke-width="1"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="fp-body">
+                <!-- Folder: app-v2 -->
+                <div class="ftree-folder">
+                  <div class="ftree-folder-head">
+                    <svg class="ftree-folder-icon open" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M3 4L5 6L7 4" stroke="#B1BAC4" stroke-width="1"/>
+                    </svg>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M1 4H13V11.5H1V4Z" stroke="#FEBC2E" stroke-width="1"/>
+                      <path d="M1 4L2.5 2.5H5.5L6.5 4" stroke="#FEBC2E" stroke-width="1"/>
+                    </svg>
+                    <span class="ftree-folder-name">app-v2</span>
+                  </div>
+                  <div class="ftree-children">
+                    <div class="ftree-file active" onclick="loadFile('index.html')">
+                      <svg class="ftree-file-icon" width="13" height="13" viewBox="0 0 13 13" fill="none">
+                        <path d="M2.5 2H8L10.5 4.5V11H2.5V2Z" stroke="#007AFF" stroke-width="1"/>
+                        <path d="M8 2V4.5H10.5" stroke="#007AFF" stroke-width="1"/>
+                      </svg>
+                      <span class="ftree-file-name">index.html</span>
+                      <span class="ftree-file-ext" style="color:var(--accent)">HTML</span>
+                    </div>
+                    <div class="ftree-file" onclick="loadFile('dashboard.html')">
+                      <svg class="ftree-file-icon" width="13" height="13" viewBox="0 0 13 13" fill="none">
+                        <path d="M2.5 2H8L10.5 4.5V11H2.5V2Z" stroke="#B1BAC4" stroke-width="1"/>
+                        <path d="M8 2V4.5H10.5" stroke="#B1BAC4" stroke-width="1"/>
+                      </svg>
+                      <span class="ftree-file-name">dashboard.html</span>
+                      <span class="ftree-file-ext">HTML</span>
+                    </div>
+                    <div class="ftree-file">
+                      <svg class="ftree-file-icon" width="13" height="13" viewBox="0 0 13 13" fill="none">
+                        <path d="M2.5 2H8L10.5 4.5V11H2.5V2Z" stroke="#B1BAC4" stroke-width="1"/>
+                        <path d="M8 2V4.5H10.5" stroke="#B1BAC4" stroke-width="1"/>
+                      </svg>
+                      <span class="ftree-file-name">login.html</span>
+                      <span class="ftree-file-ext">HTML</span>
+                    </div>
+                    <div class="ftree-file">
+                      <svg class="ftree-file-icon" width="13" height="13" viewBox="0 0 13 13" fill="none">
+                        <path d="M2.5 2H8L10.5 4.5V11H2.5V2Z" stroke="#B1BAC4" stroke-width="1"/>
+                        <path d="M8 2V4.5H10.5" stroke="#B1BAC4" stroke-width="1"/>
+                      </svg>
+                      <span class="ftree-file-name">pricing.html</span>
+                      <span class="ftree-file-ext">HTML</span>
+                    </div>
+                    <div class="ftree-file">
+                      <svg class="ftree-file-icon" width="13" height="13" viewBox="0 0 13 13" fill="none">
+                        <path d="M2.5 2H8L10.5 4.5V11H2.5V2Z" stroke="#B1BAC4" stroke-width="1"/>
+                        <path d="M8 2V4.5H10.5" stroke="#B1BAC4" stroke-width="1"/>
+                      </svg>
+                      <span class="ftree-file-name">style.css</span>
+                      <span class="ftree-file-ext">CSS</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Folder: components -->
+                <div class="ftree-folder">
+                  <div class="ftree-folder-head">
+                    <svg class="ftree-folder-icon" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M3 4L5 6L7 4" stroke="#B1BAC4" stroke-width="1"/>
+                    </svg>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M1 4H13V11.5H1V4Z" stroke="#FEBC2E" stroke-width="1"/>
+                      <path d="M1 4L2.5 2.5H5.5L6.5 4" stroke="#FEBC2E" stroke-width="1"/>
+                    </svg>
+                    <span class="ftree-folder-name">components</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Browser pane -->
+            <div class="browser-pane">
+              <div class="browser-bar">
+                <div class="browser-nav">
+                  <button class="browser-nav-btn">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 3L4 6L8 9" stroke="#B1BAC4" stroke-width="1"/></svg>
+                  </button>
+                  <button class="browser-nav-btn">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3L8 6L4 9" stroke="#B1BAC4" stroke-width="1"/></svg>
+                  </button>
+                  <button class="browser-nav-btn">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M10 6C10 3.8 8.2 2 6 2C3.8 2 2 3.8 2 6M2 4L2 6L4 6" stroke="#B1BAC4" stroke-width="1"/></svg>
+                  </button>
+                </div>
+                <div class="browser-url-bar">
+                  <svg class="browser-url-icon" width="11" height="11" viewBox="0 0 11 11" fill="none">
+                    <path d="M5.5 1L9.5 4V10H1.5V4L5.5 1Z" stroke="#B1BAC4" stroke-width="1"/>
+                  </svg>
+                  <span class="browser-url">file:///my-saas-project/docs/设计文档/原型设计/app-v2/index.html</span>
+                </div>
+                <div class="browser-actions">
+                  <button class="browser-action-btn">在浏览器中打开</button>
+                  <button class="browser-action-btn">刷新</button>
+                </div>
+              </div>
+              <div class="browser-content">
+                <!-- Preview mock -->
+                <div class="preview-mock">
+                  <div class="mock-topbar">
+                    <div class="mock-logo">SaaSFlow</div>
+                    <div class="mock-nav">
+                      <span class="mock-nav-active">首页</span>
+                      <span>功能</span>
+                      <span>定价</span>
+                      <span>文档</span>
+                    </div>
+                    <div style="margin-left:auto;display:flex;gap:10px">
+                      <div style="padding:6px 14px;font-size:13px;border:1px solid #E1E4E8;border-radius:6px;color:#0D1117">登录</div>
+                      <div style="padding:6px 14px;font-size:13px;background:#007AFF;border-radius:6px;color:white">免费试用</div>
+                    </div>
+                  </div>
+                  <div class="mock-hero">
+                    <div class="mock-h1">让 AI 驱动<br>你的项目管理</div>
+                    <div class="mock-sub">从需求分析到代码交付，一站式 AI 增强工作流，<br>让你的团队效率提升 3 倍</div>
+                    <div class="mock-cta">
+                      <div class="mock-btn-p">免费开始使用</div>
+                      <div class="mock-btn-s">观看演示视频</div>
+                    </div>
+                  </div>
+                  <div class="mock-features">
+                    <div class="mock-feat">
+                      <div class="mock-feat-icon"></div>
+                      <div class="mock-feat-title">AI 需求分析</div>
+                      <div class="mock-feat-desc">通过对话生成完整 PRD，自动梳理用户故事和验收标准</div>
+                    </div>
+                    <div class="mock-feat">
+                      <div class="mock-feat-icon"></div>
+                      <div class="mock-feat-title">原型快速生成</div>
+                      <div class="mock-feat-desc">描述你的想法，AI 秒级生成可交互的 HTML 原型</div>
+                    </div>
+                    <div class="mock-feat">
+                      <div class="mock-feat-icon"></div>
+                      <div class="mock-feat-title">智能任务拆解</div>
+                      <div class="mock-feat-desc">根据需求文档自动拆解开发任务，并估算工时</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Prompts overlay -->
+                <div class="prompts-overlay" id="promptsOverlay" style="display:none">
+                  <div class="po-head">原型设计提示词</div>
+                  <div class="po-body">
+                    <div class="po-item">
+                      <div class="po-item-label">⭐ 推荐</div>
+                      <div class="po-item-title">原型生成启动器</div>
+                      <div class="po-item-desc">根据 PRD 自动生成完整页面原型，包含导航、布局和交互</div>
+                    </div>
+                    <div class="po-item">
+                      <div class="po-item-label">落地页</div>
+                      <div class="po-item-title">Landing Page 模板</div>
+                      <div class="po-item-desc">生成高转化率的产品落地页，包含 Hero、Feature、Pricing 区块</div>
+                    </div>
+                    <div class="po-item">
+                      <div class="po-item-label">仪表盘</div>
+                      <div class="po-item-title">管理后台 Dashboard</div>
+                      <div class="po-item-desc">数据驱动的管理界面，包含图表、表格、统计卡片</div>
+                    </div>
+                    <div class="po-item">
+                      <div class="po-item-label">移动端</div>
+                      <div class="po-item-title">移动端适配优化</div>
+                      <div class="po-item-desc">将桌面端原型转化为响应式移动端布局</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Terminal -->
+          <div class="terminal-panel open" id="terminal">
+            <div class="terminal-header" onclick="toggleTerminal()">
+              <div class="terminal-dot"></div>
+              <span class="terminal-title">终端 — Claude Code CLI</span>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="margin-left:auto">
+                <path d="M3 7.5L6 4.5L9 7.5" stroke="#8B949E" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="terminal-body">
+              <div style="color:#8B949E;margin-bottom:6px">~/my-saas-project/docs/设计文档/原型设计/app-v2</div>
+              <div style="color:#E6EDF3">$ <span style="color:#E6EDF3">claude</span></div>
+              <div style="color:#8B949E;margin:4px 0">Welcome to Claude Code! Ready to generate prototypes.</div>
+              <div style="color:#E6EDF3"><span style="color:#58A6FF">claude&gt;</span> 根据 PRD.md 中的「首页」章节，生成一个现代风格的 Landing Page 原型...</div>
+              <div style="color:#8B949E;margin:3px 0">Reading PRD.md... Analyzing requirements... Generating HTML...</div>
+              <div style="color:#56D364">✓ Created: index.html (1,240 lines)</div>
+              <div style="color:#56D364">✓ Created: style.css (380 lines)</div>
+              <div style="color:#8B949E;margin-top:2px">Preview auto-refreshed.</div>
+              <div style="color:#E6EDF3;margin-top:6px"><span style="color:#58A6FF">claude&gt;</span> <span class="term-cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    let termOpen = true;
+    function toggleTerminal() {
+      const t = document.getElementById('terminal');
+      termOpen = !termOpen;
+      t.className = 'terminal-panel ' + (termOpen ? 'open' : 'closed');
+    }
+    let promptsOpen = false;
+    function togglePrompts() {
+      const p = document.getElementById('promptsOverlay');
+      promptsOpen = !promptsOpen;
+      p.style.display = promptsOpen ? 'block' : 'none';
+    }
+    function loadFile(name) {
+      document.querySelectorAll('.ftree-file').forEach(f => f.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+    }
+  </script>
+</body>
+</html>

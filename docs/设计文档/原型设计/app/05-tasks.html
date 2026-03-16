@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Workflow — 任务开发</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0B0C0F;--panel:#111318;--item:#161820;--hover:#1A1D26;
+  --term:#0D1017;
+  --line:rgba(255,255,255,0.07);--line2:rgba(255,255,255,0.12);
+  --t1:#E2E5ED;--t2:#525666;--t3:#272A36;
+  --accent:#7C6AF7;--accent-bg:rgba(124,106,247,0.09);
+  --green:#22C55E;--amber:#F59E0B;--red:#F43F5E;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',-apple-system,sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--t1);height:100vh;overflow:hidden;display:flex}
+
+/* Sidebar */
+.sidebar{width:200px;min-width:200px;background:var(--panel);display:flex;flex-direction:column;padding:16px 10px;flex-shrink:0}
+.sb-logo{display:flex;align-items:center;gap:8px;padding:4px 8px;margin-bottom:20px}
+.sb-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.sb-name{font-size:13px;font-weight:600;letter-spacing:-.2px}
+.sb-ws{padding:8px 10px;margin-bottom:16px}
+.sb-ws-path{font-size:10.5px;font-family:var(--mono);color:var(--t3);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-ws-name{font-size:13px;font-weight:600;color:var(--t1)}
+.sb-div{height:1px;background:var(--line);margin:0 10px 12px}
+.sb-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);padding:0 10px 8px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--t2);text-decoration:none;transition:background .12s,color .12s;margin-bottom:1px}
+.nav-item:hover{background:var(--hover);color:var(--t1)}
+.nav-item.active{background:var(--accent-bg);color:var(--t1)}
+.stage-dot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;border:1px solid var(--line2)}
+.stage-dot.done{background:transparent;border-color:rgba(34,197,94,0.3);color:var(--green)}
+.stage-dot.active{background:var(--accent-bg);border-color:rgba(124,106,247,0.4);color:var(--accent)}
+.stage-dot.pending{background:transparent;border-color:var(--line);color:var(--t3)}
+.sb-flex{flex:1}
+.sb-footer{border-top:1px solid var(--line);padding-top:10px}
+
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:48px;display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;border-bottom:1px solid var(--line)}
+.topbar-title{font-size:14px;font-weight:600;flex:1}
+.model-tag{background:var(--item);border:1px solid var(--line);color:var(--t2);font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:6px;display:flex;align-items:center;gap:5px;cursor:pointer}
+.model-dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+.tb-btn{background:transparent;border:1px solid var(--line);color:var(--t2);font-family:var(--sans);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;transition:all .15s}
+.tb-btn:hover{border-color:var(--line2);color:var(--t1)}
+.tb-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.tb-btn.primary:hover{opacity:.88}
+.tb-btn.danger{background:transparent;border-color:rgba(244,63,94,0.4);color:var(--red)}
+.run-btn{background:var(--green);border:none;color:#fff;font-family:var(--sans);font-size:13px;font-weight:600;padding:6px 16px;border-radius:6px;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;gap:6px}
+.run-btn:hover{opacity:.88}
+.run-btn.running{background:var(--item);border:1px solid var(--line);color:var(--amber);cursor:not-allowed}
+
+/* Board layout */
+.board{flex:1;display:flex;overflow:hidden}
+
+/* Tasks panel */
+.tasks-panel{width:280px;min-width:280px;border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+
+.milestone-list{overflow-y:auto;flex:1}
+.milestone-list::-webkit-scrollbar{width:3px}
+.milestone-list::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}
+
+.milestone{border-bottom:1px solid var(--line)}
+.ms-header{display:flex;align-items:center;gap:9px;padding:11px 14px;cursor:pointer;transition:background .12s}
+.ms-header:hover{background:var(--hover)}
+.ms-chevron{font-size:10px;color:var(--t3);transition:transform .2s;flex-shrink:0}
+.ms-chevron.open{transform:rotate(90deg)}
+.ms-info{flex:1;min-width:0}
+.ms-name{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-progress{font-size:11px;color:var(--t3);font-family:var(--mono)}
+.ms-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+.task-list{padding:4px 10px 8px;display:none}
+.task-list.show{display:block}
+.task-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:6px;cursor:pointer;transition:background .12s;margin-bottom:1px}
+.task-item:hover{background:var(--hover)}
+.task-item.active{background:var(--accent-bg)}
+.task-status{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--line2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:8px}
+.task-status.done{border-color:rgba(34,197,94,0.3);color:var(--green)}
+.task-status.running{border-color:rgba(124,106,247,0.4);animation:pulse .9s ease infinite}
+.task-status.pending{border-color:var(--line)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(124,106,247,0)}50%{box-shadow:0 0 0 3px rgba(124,106,247,0.3)}}
+.task-name{font-size:12.5px;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.task-item.active .task-name{color:var(--t1)}
+
+/* Detail / Terminal panel */
+.detail-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* Detail view */
+.detail-view{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:0}
+.detail-view::-webkit-scrollbar{width:3px}
+.detail-view::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}
+
+.dv-header{margin-bottom:20px}
+.dv-breadcrumb{font-size:11px;color:var(--t3);margin-bottom:8px;font-family:var(--mono)}
+.dv-title{font-size:19px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px}
+.dv-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.badge{font-size:11px;padding:2px 8px;border-radius:4px}
+.badge.pending{background:rgba(255,255,255,0.05);color:var(--t2)}
+.badge.running{background:rgba(124,106,247,0.1);color:var(--accent)}
+.badge.done{background:rgba(34,197,94,0.1);color:var(--green)}
+
+.dv-section{margin-bottom:18px}
+.dv-section-label{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);margin-bottom:8px}
+.dv-text{font-size:13px;color:var(--t2);line-height:1.7}
+
+.acceptance-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+.acceptance-item{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--t2)}
+.check-box{width:15px;height:15px;border:1.5px solid var(--line2);border-radius:3px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:9px}
+.check-box.checked{border-color:rgba(34,197,94,0.4);color:var(--green)}
+
+.dv-actions{display:flex;gap:8px;padding-top:4px;align-items:center}
+
+/* Terminal */
+.terminal{flex:1;background:var(--term);display:flex;flex-direction:column;overflow:hidden}
+.term-header{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0}
+.term-title{font-size:11.5px;font-family:var(--mono);color:rgba(255,255,255,0.4);flex:1}
+.term-status{font-size:11px;font-family:var(--mono);display:flex;align-items:center;gap:5px}
+.term-dot{width:6px;height:6px;border-radius:50%}
+.term-dot.running{background:var(--accent);animation:blink2 .8s ease infinite}
+.term-dot.done{background:var(--green)}
+.term-dot.idle{background:var(--t3)}
+@keyframes blink2{0%,100%{opacity:.5}50%{opacity:1}}
+.term-close{font-size:13px;color:var(--t3);cursor:pointer;background:none;border:none;padding:2px 4px}
+
+.term-body{flex:1;overflow-y:auto;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.8;color:rgba(255,255,255,0.55)}
+.term-body::-webkit-scrollbar{width:3px}
+.term-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
+.tl{display:block}
+.tl.info{color:rgba(255,255,255,0.35)}
+.tl.step{color:rgba(124,106,247,0.9)}
+.tl.code{color:rgba(110,231,183,0.85)}
+.tl.ok{color:rgba(34,197,94,0.9)}
+.tl.warn{color:rgba(245,158,11,0.85)}
+.tl.err{color:rgba(244,63,94,0.85)}
+.cursor{display:inline-block;width:7px;height:13px;background:rgba(124,106,247,0.7);vertical-align:middle;animation:caret .9s step-end infinite}
+@keyframes caret{0%,100%{opacity:1}50%{opacity:0}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-mark">⚡</div>
+    <span class="sb-name">AI Workflow</span>
+  </div>
+  <div class="sb-ws">
+    <div class="sb-ws-path">/Developer/ai-ecommerce</div>
+    <div class="sb-ws-name">AI 电商平台</div>
+  </div>
+  <div class="sb-div"></div>
+  <div class="sb-label">工作流</div>
+  <a href="./02-dashboard.html" class="nav-item">
+    <span class="stage-dot pending" style="border-color:rgba(255,255,255,0.15);color:var(--t2);font-size:13px">▤</span>概览
+  </a>
+  <a href="./03-requirements.html" class="nav-item">
+    <span class="stage-dot done">✓</span>需求梳理
+  </a>
+  <a href="./04-prototype.html" class="nav-item">
+    <span class="stage-dot done">✓</span>原型设计
+  </a>
+  <a href="#" class="nav-item">
+    <span class="stage-dot done">✓</span>技术选型
+  </a>
+  <a href="./05-tasks.html" class="nav-item active">
+    <span class="stage-dot active">4</span>任务开发
+  </a>
+  <a href="./06-retrospective.html" class="nav-item">
+    <span class="stage-dot pending">5</span>项目验收
+  </a>
+  <div class="sb-flex"></div>
+  <div class="sb-footer">
+    <a href="#" class="nav-item" style="color:var(--t2)">
+      <span style="font-size:14px;width:18px;text-align:center">⚙</span>设置
+    </a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <span class="topbar-title">任务开发</span>
+    <span style="font-size:12px;font-family:var(--mono);color:var(--t3)">24 / 68 已完成</span>
+    <div style="flex:1"></div>
+    <div class="model-tag">
+      <span class="model-dot"></span>
+      claude-sonnet-4-6 ▾
+    </div>
+    <button class="tb-btn">AI 拆解任务</button>
+    <button class="run-btn running" id="runBtn" onclick="toggleRun()">
+      <span id="runIcon">■</span><span id="runText">停止执行</span>
+    </button>
+  </div>
+
+  <div class="board">
+    <!-- Tasks panel -->
+    <div class="tasks-panel">
+      <div class="milestone-list">
+
+        <div class="milestone">
+          <div class="ms-header" onclick="toggleMs(this)">
+            <span class="ms-chevron open">▶</span>
+            <div class="ms-info">
+              <div class="ms-name">M1 · 基础架构</div>
+              <div class="ms-progress">6 / 8 完成</div>
+            </div>
+            <div class="ms-status" style="background:var(--amber)"></div>
+          </div>
+          <div class="task-list show">
+            <div class="task-item">
+              <div class="task-status done">✓</div>
+              <span class="task-name">项目初始化 & 目录结构</span>
+            </div>
+            <div class="task-item">
+              <div class="task-status done">✓</div>
+              <span class="task-name">数据库 Schema 设计</span>
+            </div>
+            <div class="task-item">
+              <div class="task-status done">✓</div>
+              <span class="task-name">API 网关配置</span>
+            </div>
+            <div class="task-item">
+              <div class="task-status done">✓</div>
+              <span class="task-name">用户认证模块</span>
+            </div>
+            <div class="task-item">
+              <div class="task-status done">✓</div>
+              <span class="task-name">商品基础 CRUD</span>
+            </div>
+            <div class="task-item">
+              <div class="task-status done">✓</div>
+              <span class="task-name">平台 OAuth 接入</span>
+            </div>
+            <div class="task-item active" onclick="selectTask(this)">
+              <div class="task-status running" style="border-color:rgba(124,106,247,0.5);background:var(--accent-bg)">▶</div>
+              <span class="task-name">AI 服务集成层</span>
+            </div>
+            <div class="task-item">
+              <div class="task-status pending"></div>
+              <span class="task-name">错误监控接入</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="milestone">
+          <div class="ms-header" onclick="toggleMs(this)">
+            <span class="ms-chevron">▶</span>
+            <div class="ms-info">
+              <div class="ms-name">M2 · 智能选品</div>
+              <div class="ms-progress">0 / 14 完成</div>
+            </div>
+            <div class="ms-status" style="background:var(--t3)"></div>
+          </div>
+          <div class="task-list">
+            <div class="task-item"><div class="task-status pending"></div><span class="task-name">市场数据爬虫</span></div>
+            <div class="task-item"><div class="task-status pending"></div><span class="task-name">竞品分析模块</span></div>
+            <div class="task-item"><div class="task-status pending"></div><span class="task-name">趋势预测模型</span></div>
+          </div>
+        </div>
+
+        <div class="milestone">
+          <div class="ms-header" onclick="toggleMs(this)">
+            <span class="ms-chevron">▶</span>
+            <div class="ms-info">
+              <div class="ms-name">M3 · 动态定价</div>
+              <div class="ms-progress">0 / 12 完成</div>
+            </div>
+            <div class="ms-status" style="background:var(--t3)"></div>
+          </div>
+          <div class="task-list"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Detail + Terminal -->
+    <div class="detail-panel">
+      <!-- Task detail -->
+      <div class="detail-view" id="detailView">
+        <div class="dv-header">
+          <div class="dv-breadcrumb">M1 · 基础架构 / 任务 #7</div>
+          <div class="dv-title">AI 服务集成层</div>
+          <div class="dv-badges">
+            <span class="badge running">▶ 执行中</span>
+            <span class="badge" style="background:rgba(255,255,255,0.04);color:var(--t2)">技术架构</span>
+          </div>
+        </div>
+
+        <div class="dv-section">
+          <div class="dv-section-label">任务描述</div>
+          <div class="dv-text">封装 Anthropic TypeScript SDK，提供统一的 AI 调用接口，支持流式输出、上下文管理和错误重试。需与 Tauri 后端的 invoke 命令对接，实现任务级别的独立上下文窗口。</div>
+        </div>
+
+        <div class="dv-section">
+          <div class="dv-section-label">验收用例</div>
+          <ul class="acceptance-list">
+            <li class="acceptance-item"><div class="check-box checked">✓</div><span>调用 API 返回流式文本，前端实时渲染</span></li>
+            <li class="acceptance-item"><div class="check-box checked">✓</div><span>支持传入自定义 system prompt 和 messages</span></li>
+            <li class="acceptance-item"><div class="check-box"></div><span>每个任务实例化独立的上下文，互不干扰</span></li>
+            <li class="acceptance-item"><div class="check-box"></div><span>网络错误时自动重试，最多 3 次</span></li>
+            <li class="acceptance-item"><div class="check-box"></div><span>token 消耗写入 .ai-workflow/tasks/ 对应文件</span></li>
+          </ul>
+        </div>
+
+        <div class="dv-section">
+          <div class="dv-section-label">使用提示词</div>
+          <div style="background:var(--item);border:1px solid var(--line);border-radius:7px;padding:12px;font-family:var(--mono);font-size:11.5px;color:var(--t2);line-height:1.7">
+            你是一个 TypeScript 专家，请实现 AI 服务集成层。要求：(1) 基于 Anthropic SDK v1.x (2) 支持 stream: true (3) 封装 createTaskContext(taskId, systemPrompt) 方法...
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
+            <span style="font-size:11px;color:var(--t3)">效果评分</span>
+            <span style="font-size:14px;letter-spacing:2px">★★★★☆</span>
+            <span style="font-size:11px;color:var(--t3)">4 / 5</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Terminal -->
+      <div class="terminal" id="termPanel">
+        <div class="term-header">
+          <span class="term-title">AI 执行输出 · 任务 #7 · AI 服务集成层</span>
+          <div class="term-status">
+            <div class="term-dot running" id="termDot"></div>
+            <span style="color:rgba(124,106,247,0.7)" id="termStatusText">执行中</span>
+          </div>
+          <button class="term-close" onclick="closeTerminal()">✕</button>
+        </div>
+        <div class="term-body" id="termBody">
+          <span class="tl info">[2026-03-16 14:35:02] 任务启动 · 独立上下文窗口已创建</span>
+          <span class="tl info">[14:35:02] 检索记忆模块 · 标签: TypeScript, API集成, 架构</span>
+          <span class="tl info">[14:35:03] 匹配到 3 条相关经验，已注入上下文</span>
+          <span class="tl step">[14:35:03] ▶ 开始生成: src/services/ai/index.ts</span>
+          <span class="tl code">  import Anthropic from '@anthropic-ai/sdk';</span>
+          <span class="tl code">  import { invoke } from '@tauri-apps/api/tauri';</span>
+          <span class="tl code">  </span>
+          <span class="tl code">  interface TaskContext {</span>
+          <span class="tl code">    taskId: string;</span>
+          <span class="tl code">    systemPrompt: string;</span>
+          <span class="tl code">    messages: Anthropic.MessageParam[];</span>
+          <span class="tl code">  }</span>
+          <span class="tl code">  </span>
+          <span class="tl code">  export class AIService {</span>
+          <span class="tl code">    private client: Anthropic;</span>
+          <span class="tl code">    private contexts = new Map&lt;string, TaskContext&gt;();</span>
+          <span class="tl code">  </span>
+          <span class="tl code">    constructor(apiKey: string) {</span>
+          <span class="tl code">      this.client = new Anthropic({ apiKey });</span>
+          <span class="tl code">    }</span>
+          <span class="tl code">  </span>
+          <span class="tl code">    createTaskContext(taskId: string, systemPrompt: string) {</span>
+          <span class="tl code">      this.contexts.set(taskId, { taskId, systemPrompt, messages: [] });</span>
+          <span class="tl code">    }</span>
+          <span class="tl code">  </span>
+          <span class="tl code">    async *stream(taskId: string, userMsg: string) {</span>
+          <span class="tl code">      const ctx = this.contexts.get(taskId)!;</span>
+          <span class="tl code">      ctx.messages.push({ role: 'user', content: userMsg });</span>
+          <span class="tl code">      <span class="cursor"></span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+let running = true;
+
+function toggleMs(header) {
+  const chevron = header.querySelector('.ms-chevron');
+  const list = header.nextElementSibling;
+  chevron.classList.toggle('open');
+  list.classList.toggle('show');
+}
+
+function selectTask(el) {
+  document.querySelectorAll('.task-item').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function toggleRun() {
+  running = !running;
+  const btn = document.getElementById('runBtn');
+  const dot = document.getElementById('termDot');
+  const statusText = document.getElementById('termStatusText');
+  if(running) {
+    btn.className='run-btn running';
+    btn.innerHTML='<span>■</span><span>停止执行</span>';
+    dot.className='term-dot running';
+    statusText.textContent='执行中';
+    statusText.style.color='rgba(124,106,247,0.7)';
+  } else {
+    btn.className='run-btn';
+    btn.innerHTML='<span>▶</span><span>继续执行</span>';
+    dot.className='term-dot idle';
+    statusText.textContent='已暂停';
+    statusText.style.color='rgba(255,255,255,0.3)';
+  }
+}
+
+function closeTerminal(){
+  document.getElementById('termPanel').style.display='none';
+  document.getElementById('detailView').style.flex='1';
+}
+
+// Simulate stream typing
+let streamInterval;
+const moreLines = [
+  {cls:'code', text:'      const stream = await this.client.messages.stream({'},
+  {cls:'code', text:'        model: "claude-sonnet-4-6",'},
+  {cls:'code', text:'        max_tokens: 8192,'},
+  {cls:'code', text:'        system: ctx.systemPrompt,'},
+  {cls:'code', text:'        messages: ctx.messages'},
+  {cls:'code', text:'      });'},
+  {cls:'code', text:'      for await (const chunk of stream) {'},
+  {cls:'code', text:'        if (chunk.type === "content_block_delta") {'},
+  {cls:'code', text:'          yield chunk.delta.text;'},
+  {cls:'code', text:'        }'},
+  {cls:'code', text:'      }'},
+  {cls:'code', text:'    }'},
+  {cls:'code', text:'  }'},
+  {cls:'step', text:'[14:35:08] ▶ 写入文件: src/services/ai/index.ts'},
+  {cls:'ok',   text:'[14:35:08] ✓ 文件已写入 (1,204 bytes)'},
+  {cls:'step', text:'[14:35:08] ▶ Code Review 开始...'},
+  {cls:'info', text:'[14:35:10]   安全：无 API Key 硬编码 ✓'},
+  {cls:'info', text:'[14:35:10]   性能：流式处理，无内存泄漏 ✓'},
+  {cls:'info', text:'[14:35:10]   覆盖率：验收用例 3/5 已满足'},
+  {cls:'warn', text:'[14:35:10] ⚠ 缺少重试机制，建议补充 withRetry() 包装'},
+  {cls:'step', text:'[14:35:11] ▶ 生成重试包装器...'},
+];
+let lineIdx = 0;
+
+streamInterval = setInterval(() => {
+  if (!running || lineIdx >= moreLines.length) {
+    if (lineIdx >= moreLines.length) {
+      clearInterval(streamInterval);
+      document.querySelector('.cursor').remove();
+      const tb = document.getElementById('termBody');
+      const fin = document.createElement('span');
+      fin.className = 'tl ok';
+      fin.textContent = '[14:35:14] ✓ 任务完成 · 上下文窗口已关闭';
+      tb.appendChild(fin);
+      document.getElementById('termDot').className = 'term-dot done';
+      document.getElementById('termStatusText').textContent = '已完成';
+      document.getElementById('termStatusText').style.color = 'rgba(34,197,94,0.8)';
+      document.getElementById('runBtn').className = 'tb-btn';
+      document.getElementById('runBtn').innerHTML = '▶ 执行下一任务';
+    }
+    return;
+  }
+  const tb = document.getElementById('termBody');
+  const cursor = tb.querySelector('.cursor');
+  if (cursor) cursor.parentElement.removeChild(cursor);
+  const line = document.createElement('span');
+  line.className = `tl ${moreLines[lineIdx].cls}`;
+  line.textContent = '  ' + moreLines[lineIdx].text;
+  tb.appendChild(line);
+  lineIdx++;
+  tb.scrollTop = tb.scrollHeight;
+}, 400);
+</script>
+</body>
+</html>

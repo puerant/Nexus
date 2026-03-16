@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Workflow — 选择工作区</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0A0C0F;
+  --surface:#111318;
+  --elevated:#181C22;
+  --hover:#1E2230;
+  --b0:rgba(255,255,255,0.05);
+  --b1:rgba(255,255,255,0.09);
+  --b2:rgba(255,255,255,0.14);
+  --t1:#E2E6EE;
+  --t2:#8B94A8;
+  --t3:#4A5468;
+  --accent:#7C6AF7;
+  --accent-d:rgba(124,106,247,0.12);
+  --accent-g:rgba(124,106,247,0.28);
+  --ok:#22C55E;
+  --warn:#F59E0B;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Inter',-apple-system,sans-serif;
+  --r:12px;--rl:16px
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background-image:radial-gradient(ellipse at 15% 60%,rgba(124,106,247,0.09) 0%,transparent 55%),radial-gradient(ellipse at 85% 15%,rgba(0,229,255,0.06) 0%,transparent 45%)}
+
+.wrap{width:460px;max-width:92vw}
+
+.logo{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:36px}
+.logo-icon{width:44px;height:44px;background:linear-gradient(135deg,#7C6AF7,#A78BFA);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 24px rgba(124,106,247,0.45)}
+.logo-text{font-size:20px;font-weight:700;letter-spacing:-.5px;background:linear-gradient(135deg,#E2E6EE,#A78BFA);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+.steps{display:flex;align-items:center;gap:6px;justify-content:center;margin-bottom:28px}
+.step-dot{width:7px;height:7px;border-radius:50%;background:var(--b2);transition:all .3s}
+.step-dot.active{width:22px;border-radius:4px;background:var(--accent);box-shadow:0 0 10px var(--accent-g)}
+.step-dot.done{background:var(--ok)}
+
+.card{background:var(--surface);border:1px solid var(--b1);border-radius:var(--rl);padding:30px}
+
+.card-title{font-size:21px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px}
+.card-sub{color:var(--t2);font-size:13.5px;line-height:1.65;margin-bottom:26px}
+
+.label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);margin-bottom:10px}
+
+.folder-row{background:var(--elevated);border:1px solid var(--b1);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:14px}
+.folder-row:hover{border-color:var(--b2)}
+.folder-row.sel{border-color:var(--accent);background:var(--accent-d)}
+.folder-icon{font-size:18px;flex-shrink:0}
+.folder-path{flex:1;font-family:var(--mono);font-size:12.5px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.folder-row.sel .folder-path{color:var(--t1)}
+.browse{background:var(--hover);border:1px solid var(--b1);color:var(--t2);font-family:var(--sans);font-size:11.5px;padding:5px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;transition:all .2s}
+.browse:hover{border-color:var(--accent);color:var(--t1)}
+
+.recents{display:flex;flex-direction:column;gap:4px;margin-bottom:26px}
+.recent-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background .15s}
+.recent-item:hover{background:var(--hover)}
+.recent-icon{font-size:15px}
+.recent-name{font-size:13px;color:var(--t1);flex:1}
+.recent-path{font-size:11px;font-family:var(--mono);color:var(--t3)}
+
+.sync-opts{display:flex;flex-direction:column;gap:10px;margin-bottom:26px}
+.sync-opt{background:var(--elevated);border:1px solid var(--b1);border-radius:var(--r);padding:15px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .2s}
+.sync-opt:hover{border-color:var(--b2);background:var(--hover)}
+.sync-opt.sel{border-color:var(--accent);background:var(--accent-d)}
+.sync-opt-ico{width:34px;height:34px;background:var(--hover);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px}
+.sync-opt.sel .sync-opt-ico{background:rgba(124,106,247,0.2)}
+.sync-opt-body{flex:1}
+.sync-opt-title{font-size:13.5px;font-weight:500;margin-bottom:2px}
+.sync-opt-desc{font-size:12px;color:var(--t2)}
+.radio{width:15px;height:15px;border-radius:50%;border:2px solid var(--b2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.sync-opt.sel .radio{border-color:var(--accent);background:var(--accent);box-shadow:0 0 7px var(--accent-g)}
+.radio::after{content:'';width:5px;height:5px;border-radius:50%;background:#fff;display:none}
+.sync-opt.sel .radio::after{display:block}
+
+.gh-config{background:var(--elevated);border:1px solid var(--b1);border-radius:var(--r);padding:14px;margin-top:8px;display:none}
+.gh-config.show{display:block;animation:fadeUp .2s ease}
+.inp-label{font-size:11.5px;color:var(--t2);margin-bottom:5px}
+.inp{width:100%;background:var(--bg);border:1px solid var(--b1);color:var(--t1);font-family:var(--mono);font-size:12.5px;padding:9px 11px;border-radius:8px;outline:none;transition:border-color .2s;margin-bottom:10px}
+.inp:focus{border-color:var(--accent)}
+.inp::placeholder{color:var(--t3)}
+.inp:last-child{margin-bottom:0}
+
+.btn-row{display:flex;gap:10px;margin-top:6px}
+.btn-back{background:transparent;border:1px solid var(--b1);color:var(--t2);font-family:var(--sans);font-size:13.5px;padding:12px 18px;border-radius:var(--r);cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-back:hover{border-color:var(--b2);color:var(--t1)}
+.btn-primary{flex:1;background:var(--accent);color:#fff;border:none;font-family:var(--sans);font-size:13.5px;font-weight:600;padding:12px;border-radius:var(--r);cursor:pointer;transition:all .2s;box-shadow:0 4px 16px var(--accent-g)}
+.btn-primary:hover:not(:disabled){opacity:.9;transform:translateY(-1px);box-shadow:0 6px 22px var(--accent-g)}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+
+.step{display:none}
+.step.active{display:block;animation:fadeUp .25s ease}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <span class="logo-text">AI Workflow</span>
+  </div>
+
+  <div class="steps">
+    <div class="step-dot active" id="d1"></div>
+    <div class="step-dot" id="d2"></div>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="step active" id="s1">
+    <div class="card">
+      <div class="card-title">选择工作区</div>
+      <div class="card-sub">选择一个本地文件夹作为工作区，所有项目文件和配置将保存在此目录中。</div>
+
+      <div class="label">工作区路径</div>
+      <div class="folder-row" id="fp" onclick="pickFolder()">
+        <span class="folder-icon">📁</span>
+        <span class="folder-path" id="fpath">点击选择文件夹...</span>
+        <button class="browse" onclick="event.stopPropagation();pickFolder()">浏览</button>
+      </div>
+
+      <div class="label" style="margin-top:18px">最近使用</div>
+      <div class="recents">
+        <div class="recent-item" onclick="setFolder('/Developer/Projects')">
+          <span class="recent-icon" style="color:#F59E0B">📂</span>
+          <span class="recent-name">Projects</span>
+          <span class="recent-path">/Developer/Projects</span>
+        </div>
+        <div class="recent-item" onclick="setFolder('/Users/me/workspace/ai-apps')">
+          <span class="recent-icon" style="color:#22C55E">📂</span>
+          <span class="recent-name">ai-apps</span>
+          <span class="recent-path">/Users/me/workspace/ai-apps</span>
+        </div>
+        <div class="recent-item" onclick="setFolder('/Developer/side-projects')">
+          <span class="recent-icon" style="color:#38BDF8">📂</span>
+          <span class="recent-name">side-projects</span>
+          <span class="recent-path">/Developer/side-projects</span>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="s1btn" disabled onclick="toS2()">继续 →</button>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="step" id="s2">
+    <div class="card">
+      <div class="card-title">配置同步</div>
+      <div class="card-sub">选择是否将工作区与远程仓库同步，以便版本管理和多设备备份。</div>
+
+      <div class="sync-opts">
+        <div class="sync-opt" id="opt-gh" onclick="pickSync('gh')">
+          <div class="sync-opt-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:#e2e6ee">
+              <path d="M12 0C5.37 0 0 5.373 0 12c0 5.302 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+            </svg>
+          </div>
+          <div class="sync-opt-body">
+            <div class="sync-opt-title">GitHub 仓库</div>
+            <div class="sync-opt-desc">连接 GitHub 仓库，自动同步项目变更与版本历史</div>
+          </div>
+          <div class="radio"></div>
+        </div>
+
+        <div class="sync-opt" id="opt-none" onclick="pickSync('none')">
+          <div class="sync-opt-ico">💾</div>
+          <div class="sync-opt-body">
+            <div class="sync-opt-title">仅本地存储</div>
+            <div class="sync-opt-desc">不进行远程同步，所有数据保存在本机</div>
+          </div>
+          <div class="radio"></div>
+        </div>
+      </div>
+
+      <div class="gh-config" id="ghcfg">
+        <div class="inp-label">GitHub Personal Access Token</div>
+        <input class="inp" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+        <div class="inp-label">仓库地址</div>
+        <input class="inp" type="text" placeholder="username/repository-name">
+      </div>
+
+      <div class="btn-row" style="margin-top:20px">
+        <button class="btn-back" onclick="toS1()">← 返回</button>
+        <button class="btn-primary" id="s2btn" disabled onclick="goApp()">开始使用 ✓</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function setFolder(p){
+  document.getElementById('fpath').textContent=p;
+  document.getElementById('fp').classList.add('sel');
+  document.getElementById('s1btn').disabled=false;
+}
+function pickFolder(){setFolder('/Developer/Projects/new-workspace');}
+function toS2(){
+  document.getElementById('s1').classList.remove('active');
+  document.getElementById('s2').classList.add('active');
+  document.getElementById('d1').className='step-dot done';
+  document.getElementById('d2').className='step-dot active';
+}
+function toS1(){
+  document.getElementById('s2').classList.remove('active');
+  document.getElementById('s1').classList.add('active');
+  document.getElementById('d2').className='step-dot';
+  document.getElementById('d1').className='step-dot active';
+}
+function pickSync(t){
+  document.querySelectorAll('.sync-opt').forEach(e=>e.classList.remove('sel'));
+  document.getElementById('opt-'+t).classList.add('sel');
+  document.getElementById('ghcfg').classList.toggle('show',t==='gh');
+  document.getElementById('s2btn').disabled=false;
+}
+function goApp(){window.location.href='./02-project-dashboard.html';}
+</script>
+</body>
+</html>

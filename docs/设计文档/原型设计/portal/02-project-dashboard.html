@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Workflow — 项目概览</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0A0C0F;--surface:#111318;--elevated:#181C22;--hover:#1E2230;
+  --b0:rgba(255,255,255,0.05);--b1:rgba(255,255,255,0.08);--b2:rgba(255,255,255,0.13);
+  --t1:#E2E6EE;--t2:#8B94A8;--t3:#4A5468;
+  --accent:#7C6AF7;--accent-d:rgba(124,106,247,0.12);--accent-g:rgba(124,106,247,0.25);
+  --neon:#00E5FF;--ok:#22C55E;--warn:#F59E0B;--danger:#F43F5E;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',-apple-system,sans-serif;
+  --r:10px;--rl:14px
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--t1);height:100vh;overflow:hidden;display:flex}
+
+/* Sidebar */
+.sidebar{width:220px;min-width:220px;background:rgba(14,16,20,0.92);backdrop-filter:blur(24px);border-right:1px solid var(--b0);display:flex;flex-direction:column;padding:14px 10px}
+.sb-logo{display:flex;align-items:center;gap:9px;padding:6px 8px;margin-bottom:14px}
+.sb-logo-icon{width:30px;height:30px;background:linear-gradient(135deg,#7C6AF7,#A78BFA);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 0 14px rgba(124,106,247,0.35)}
+.sb-logo-text{font-size:14px;font-weight:700;letter-spacing:-.3px}
+
+.sb-project{background:var(--elevated);border:1px solid var(--b1);border-radius:var(--r);padding:10px 12px;margin-bottom:18px;cursor:pointer;transition:border-color .2s}
+.sb-project:hover{border-color:var(--b2)}
+.sb-proj-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);margin-bottom:4px}
+.sb-proj-name{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-stage-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);color:var(--neon);font-size:10.5px;font-weight:500;padding:2px 8px;border-radius:20px}
+.sb-stage-dot{width:5px;height:5px;border-radius:50%;background:var(--neon);box-shadow:0 0 5px var(--neon)}
+
+.sb-nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.sb-nav-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);padding:8px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;font-size:13px;color:var(--t2);text-decoration:none}
+.nav-item:hover{background:var(--hover);color:var(--t1)}
+.nav-item.active{background:var(--accent-d);color:var(--t1)}
+.nav-item.active .nav-icon{color:var(--accent)}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+
+.sb-footer{border-top:1px solid var(--b0);padding-top:10px;margin-top:8px}
+
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:50px;border-bottom:1px solid var(--b0);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600;flex:1}
+.model-sel{background:var(--elevated);border:1px solid var(--b1);color:var(--t2);font-family:var(--mono);font-size:11.5px;padding:5px 10px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:border-color .2s}
+.model-sel:hover{border-color:var(--b2);color:var(--t1)}
+.model-dot{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+
+.content{flex:1;overflow-y:auto;padding:24px 28px}
+.content::-webkit-scrollbar{width:5px}
+.content::-webkit-scrollbar-track{background:transparent}
+.content::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+
+/* Dashboard */
+.proj-header{margin-bottom:28px}
+.proj-name{font-size:26px;font-weight:800;letter-spacing:-.7px;margin-bottom:6px}
+.proj-desc{color:var(--t2);font-size:13.5px;line-height:1.65;max-width:580px}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--b1);border-radius:var(--rl);padding:18px 20px;transition:border-color .2s}
+.stat-card:hover{border-color:var(--b2)}
+.stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);margin-bottom:10px}
+.stat-val{font-size:28px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1}
+.stat-sub{font-size:11.5px;color:var(--t2);margin-top:6px}
+.stat-accent{color:var(--accent)}
+.stat-ok{color:var(--ok)}
+.stat-warn{color:var(--warn)}
+.stat-neon{color:var(--neon)}
+
+/* Stage progress */
+.section-title{font-size:13px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:14px}
+.stages-track{background:var(--surface);border:1px solid var(--b1);border-radius:var(--rl);padding:22px 24px;margin-bottom:24px}
+.stages{display:flex;align-items:center;gap:0;position:relative}
+.stage{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;z-index:1}
+.stage-connector{flex:1;height:2px;background:var(--b1);position:relative;top:-14px}
+.stage-connector.done{background:linear-gradient(90deg,var(--ok),var(--ok))}
+.stage-connector.active{background:linear-gradient(90deg,var(--ok),var(--accent))}
+.stage-circle{width:28px;height:28px;border-radius:50%;border:2px solid var(--b2);background:var(--elevated);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-bottom:8px;transition:all .3s}
+.stage.done .stage-circle{background:var(--ok);border-color:var(--ok);color:#fff;box-shadow:0 0 10px rgba(34,197,94,0.4)}
+.stage.active .stage-circle{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 12px var(--accent-g)}
+.stage-name{font-size:11px;color:var(--t3);text-align:center;white-space:nowrap}
+.stage.done .stage-name,.stage.active .stage-name{color:var(--t2)}
+
+/* Heatmap */
+.heatmap-section{background:var(--surface);border:1px solid var(--b1);border-radius:var(--rl);padding:22px 24px;margin-bottom:24px}
+.heatmap-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.heatmap-grid-wrap{overflow-x:auto}
+.heatmap-grid{display:grid;grid-template-rows:repeat(7,11px);grid-auto-flow:column;grid-auto-columns:11px;gap:3px;min-width:max-content}
+.hm-cell{width:11px;height:11px;border-radius:2.5px;transition:transform .1s}
+.hm-cell:hover{transform:scale(1.3)}
+.heatmap-legend{display:flex;align-items:center;gap:4px;margin-top:12px;font-size:11px;color:var(--t3)}
+.hm-months{display:flex;gap:0;margin-bottom:6px;font-size:10.5px;color:var(--t3);font-family:var(--mono)}
+.month-label{flex:none;text-align:left}
+
+/* Activity */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.activity-card{background:var(--surface);border:1px solid var(--b1);border-radius:var(--rl);padding:20px}
+.activity-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--b0)}
+.activity-item:last-child{border-bottom:none;padding-bottom:0}
+.act-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.act-body{flex:1}
+.act-title{font-size:13px;color:var(--t1);margin-bottom:2px}
+.act-time{font-size:11px;color:var(--t3);font-family:var(--mono)}
+
+.mini-ring{position:relative;display:flex;align-items:center;justify-content:center}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-icon">⚡</div>
+    <span class="sb-logo-text">AI Workflow</span>
+  </div>
+
+  <a href="./02-project-dashboard.html" style="text-decoration:none" class="sb-project">
+    <div class="sb-proj-label">当前项目</div>
+    <div class="sb-proj-name">AI 电商平台</div>
+    <div class="sb-stage-badge">
+      <div class="sb-stage-dot"></div>
+      原型设计阶段
+    </div>
+  </a>
+
+  <nav class="sb-nav">
+    <div class="sb-nav-label">工作流</div>
+    <a href="./03-requirements.html" class="nav-item">
+      <span class="nav-icon">📋</span>需求分析
+    </a>
+    <a href="./04-prototype-design.html" class="nav-item">
+      <span class="nav-icon">🎨</span>原型设计
+    </a>
+    <a href="./05-task-board.html" class="nav-item">
+      <span class="nav-icon">✅</span>任务看板
+    </a>
+    <a href="./06-retrospective.html" class="nav-item">
+      <span class="nav-icon">📊</span>复盘总结
+    </a>
+  </nav>
+
+  <div class="sb-footer">
+    <a href="#" class="nav-item"><span class="nav-icon">⚙️</span>设置</a>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="topbar">
+    <span class="topbar-title">项目概览</span>
+    <div class="model-sel">
+      <div class="model-dot"></div>
+      claude-sonnet-4-6 ▾
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="proj-header">
+      <div class="proj-name">AI 电商平台</div>
+      <div class="proj-desc">面向中小商家的 AI 驱动电商解决方案，包含智能选品、动态定价、个性化推荐和自动化客服模块。目标在 Q2 完成 MVP 验证。</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">当前阶段</div>
+        <div class="stat-val stat-neon" style="font-size:20px;letter-spacing:0">原型设计</div>
+        <div class="stat-sub">阶段 2 / 5</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">任务完成</div>
+        <div class="stat-val stat-ok">24</div>
+        <div class="stat-sub">共 68 个任务</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">已投入时间</div>
+        <div class="stat-val stat-accent">47<span style="font-size:16px;letter-spacing:0">h</span></div>
+        <div class="stat-sub">预估剩余 120h</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Token 消耗</div>
+        <div class="stat-val" style="font-size:22px;letter-spacing:-.5px">1.2<span style="font-size:14px">M</span></div>
+        <div class="stat-sub">≈ ¥12.4 成本</div>
+      </div>
+    </div>
+
+    <!-- Stage Progress -->
+    <div class="section-title">项目阶段</div>
+    <div class="stages-track">
+      <div class="stages">
+        <div class="stage done">
+          <div class="stage-circle">✓</div>
+          <div class="stage-name">需求梳理</div>
+        </div>
+        <div class="stage-connector done"></div>
+        <div class="stage active">
+          <div class="stage-circle">2</div>
+          <div class="stage-name">原型设计</div>
+        </div>
+        <div class="stage-connector"></div>
+        <div class="stage">
+          <div class="stage-circle">3</div>
+          <div class="stage-name">技术选型</div>
+        </div>
+        <div class="stage-connector"></div>
+        <div class="stage">
+          <div class="stage-circle">4</div>
+          <div class="stage-name">任务开发</div>
+        </div>
+        <div class="stage-connector"></div>
+        <div class="stage">
+          <div class="stage-circle">5</div>
+          <div class="stage-name">项目验收</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Heatmap -->
+    <div class="section-title">提交热力图</div>
+    <div class="heatmap-section">
+      <div class="heatmap-header">
+        <span style="font-size:13px;color:var(--t2)">过去一年的活跃度</span>
+        <span style="font-size:12px;font-family:var(--mono);color:var(--t3)">286 次提交</span>
+      </div>
+      <div class="heatmap-grid-wrap">
+        <div id="hm-months" style="display:flex;gap:0;margin-bottom:5px;padding-left:22px"></div>
+        <div style="display:flex;gap:6px">
+          <div style="display:flex;flex-direction:column;gap:3px;font-size:9px;color:var(--t3);font-family:var(--mono);padding-top:2px">
+            <span style="height:11px">Mo</span><span style="height:11px"></span><span style="height:11px">We</span><span style="height:11px"></span><span style="height:11px">Fr</span><span style="height:11px"></span><span style="height:11px">Su</span>
+          </div>
+          <div class="heatmap-grid" id="heatmap"></div>
+        </div>
+      </div>
+      <div class="heatmap-legend">
+        <span>少</span>
+        <div style="width:11px;height:11px;border-radius:2.5px;background:rgba(255,255,255,0.06)"></div>
+        <div style="width:11px;height:11px;border-radius:2.5px;background:rgba(0,229,255,0.18)"></div>
+        <div style="width:11px;height:11px;border-radius:2.5px;background:rgba(0,229,255,0.42)"></div>
+        <div style="width:11px;height:11px;border-radius:2.5px;background:rgba(0,229,255,0.7)"></div>
+        <div style="width:11px;height:11px;border-radius:2.5px;background:#00E5FF"></div>
+        <span>多</span>
+      </div>
+    </div>
+
+    <!-- Activity + Info -->
+    <div class="two-col">
+      <div class="activity-card">
+        <div class="section-title" style="margin-bottom:8px">最近活动</div>
+        <div class="activity-item">
+          <div class="act-dot" style="background:var(--neon)"></div>
+          <div class="act-body">
+            <div class="act-title">完成首页原型图设计</div>
+            <div class="act-time">2 小时前</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="act-dot" style="background:var(--ok)"></div>
+          <div class="act-body">
+            <div class="act-title">需求文档已锁定 v1.2</div>
+            <div class="act-time">昨天 18:30</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="act-dot" style="background:var(--accent)"></div>
+          <div class="act-body">
+            <div class="act-title">AI 生成购物车页原型</div>
+            <div class="act-time">昨天 16:05</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="act-dot" style="background:var(--warn)"></div>
+          <div class="act-body">
+            <div class="act-title">技术选型方案待确认</div>
+            <div class="act-time">3 天前</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="act-dot" style="background:var(--t3)"></div>
+          <div class="act-body">
+            <div class="act-title">项目初始化完成</div>
+            <div class="act-time">2026-03-10</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <div class="section-title" style="margin-bottom:8px">项目信息</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b0)">
+            <span style="font-size:12px;color:var(--t3)">工作区路径</span>
+            <span style="font-size:11.5px;font-family:var(--mono);color:var(--t2)">/Developer/ai-ecommerce</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b0)">
+            <span style="font-size:12px;color:var(--t3)">同步方式</span>
+            <span style="font-size:12px;color:var(--t2);display:flex;align-items:center;gap:5px">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm4.44 17.56l-1.42 1.42L12 16l-3.02 2.98-1.42-1.42L10.54 15l-3.04-2.98 1.42-1.42L12 13.48l3.04-2.98 1.42 1.42L13.46 15l2.98 2.56z"/></svg>
+              GitHub
+            </span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b0)">
+            <span style="font-size:12px;color:var(--t3)">创建时间</span>
+            <span style="font-size:11.5px;font-family:var(--mono);color:var(--t2)">2026-03-10</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b0)">
+            <span style="font-size:12px;color:var(--t3)">默认模型</span>
+            <span style="font-size:11.5px;font-family:var(--mono);color:var(--accent)">claude-sonnet-4-6</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0">
+            <span style="font-size:12px;color:var(--t3)">完成进度</span>
+            <span style="font-size:12px;color:var(--ok)">35.3%</span>
+          </div>
+          <div style="background:var(--elevated);border-radius:4px;height:6px;overflow:hidden">
+            <div style="width:35.3%;height:100%;background:linear-gradient(90deg,var(--accent),var(--neon));border-radius:4px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+// Heatmap generation
+const hm = document.getElementById('heatmap');
+const WEEKS = 53;
+const colors = ['rgba(255,255,255,0.06)','rgba(0,229,255,0.15)','rgba(0,229,255,0.38)','rgba(0,229,255,0.65)','#00E5FF'];
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// Generate month labels
+const mLabels = document.getElementById('hm-months');
+let monthPositions = [0,4,8,13,17,21,26,30,35,39,43,48];
+monthPositions.forEach((pos,i)=>{
+  const sp = document.createElement('span');
+  sp.textContent = months[i];
+  sp.style.cssText = `font-size:9.5px;color:var(--t3);font-family:var(--mono);width:${(i<11?monthPositions[i+1]-pos:WEEKS-pos)*14}px;display:inline-block`;
+  mLabels.appendChild(sp);
+});
+
+// Generate cells (column-major: 7 rows per column = 1 week)
+for(let w=0;w<WEEKS;w++){
+  for(let d=0;d<7;d++){
+    const cell = document.createElement('div');
+    cell.className = 'hm-cell';
+    const r = Math.random();
+    let lvl = 0;
+    if(r > 0.55) lvl = Math.ceil(Math.random()*4);
+    // Simulate more activity in recent weeks
+    if(w > 45 && Math.random() > 0.3) lvl = Math.max(lvl, 2);
+    cell.style.background = colors[lvl];
+    const date = new Date(2025,2,16 - (WEEKS-w)*7 + d);
+    cell.title = `${date.toLocaleDateString('zh-CN')} · ${lvl>0?lvl*3+'次提交':'无活动'}`;
+    hm.appendChild(cell);
+  }
+}
+</script>
+</body>
+</html>
