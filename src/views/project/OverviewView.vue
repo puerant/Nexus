@@ -1,207 +1,110 @@
-<template>
-  <div class="overview">
-    <!-- Topbar -->
-    <div class="topbar">
-      <div class="breadcrumb">
-        <span class="bc-item">{{ project?.name }}</span>
-        <span class="bc-sep">/</span>
-        <span class="bc-current">概览</span>
+﻿<template>
+  <section class="overview-page">
+    <header class="overview-hero surface-card surface-card-hero">
+      <div>
+        <div class="eyebrow">Project Overview</div>
+        <h2>{{ project?.name || '未命名项目' }}</h2>
+        <p class="hero-copy">{{ currentPhaseName }} · 围绕需求、原型、技术方案、任务拆解和复盘，持续推进当前项目工作流。</p>
+
+        <div class="hero-meta">
+          <span class="meta-chip">创建于 {{ formatDate(project?.createdAt) }}</span>
+          <span class="meta-chip">工作区 {{ workspacePath }}</span>
+        </div>
       </div>
-      <div class="topbar-actions">
-        <button class="btn btn-ghost">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path
-              d="M2 6C2 3.8 3.8 2 6 2C8.2 2 10 3.8 10 6"
-              stroke="#6E7781"
-              stroke-width="1"
-            />
-            <path d="M10 4L10 6L8 6" stroke="#6E7781" stroke-width="1" />
-          </svg>
-          同步状态
-        </button>
-        <RouterLink
-          :to="{ name: 'requirements', params: { id: projectId } }"
-          class="btn btn-primary"
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 1V11M1 6H11" stroke="white" stroke-width="1" />
-          </svg>
+
+      <div class="hero-actions">
+        <button class="ghost-btn" type="button">同步状态</button>
+        <RouterLink :to="{ name: 'requirements', params: { id: projectId } }" class="btn btn-primary">
           开始需求分析
         </RouterLink>
       </div>
-    </div>
+    </header>
 
-    <!-- Content -->
-    <div class="content">
-      <!-- Project header -->
-      <div class="project-header">
-        <div class="project-title-row">
-          <span class="project-title">{{ project?.name }}</span>
-          <span class="phase-badge">{{ currentPhaseName }}</span>
+    <section class="stats-grid">
+      <article class="surface-card stat-card accent-card">
+        <div class="stat-label">阶段进度</div>
+        <div class="stat-value">{{ completedPhases }}/5</div>
+        <div class="stat-sub">已完成 {{ completedPhases }} 个阶段</div>
+        <div class="progress-track">
+          <div class="progress-bar" :style="{ width: `${(completedPhases / 5) * 100}%` }" />
         </div>
-        <div class="project-meta">
-          <span class="meta-item">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <circle cx="6" cy="6" r="4.5" stroke="#6E7781" stroke-width="1" />
-              <path d="M6 3.5V6L7.5 7.5" stroke="#6E7781" stroke-width="1" />
-            </svg>
-            创建于 {{ formatDate(project?.createdAt) }}
-          </span>
-          <span class="meta-item">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M1 8L5 4.5L7.5 6.5L11 3" stroke="#6E7781" stroke-width="1" />
-            </svg>
-            工作区：{{ workspacePath }}
-          </span>
-        </div>
-      </div>
+      </article>
 
-      <!-- Stats row -->
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-label">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M2 10L5 6.5L7.5 8.5L10 4.5" stroke="#B1BAC4" stroke-width="1" />
-            </svg>
-            阶段进度
-          </div>
-          <div class="stat-value">{{ completedPhases }}</div>
-          <div class="stat-sub">共 5 个阶段</div>
-          <div class="stat-progress">
-            <div class="stat-bar" :style="{ width: `${(completedPhases / 5) * 100}%` }" />
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <circle cx="6" cy="6" r="4.5" stroke="#B1BAC4" stroke-width="1" />
-              <path d="M6 3.5V6L7.5 7.5" stroke="#B1BAC4" stroke-width="1" />
-            </svg>
-            AI 模型
-          </div>
-          <div class="stat-value-sm">{{ modelLabel }}</div>
-          <div class="stat-sub">当前使用</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M2 9L5 6.5L7.5 8.5L10.5 2.5" stroke="#B1BAC4" stroke-width="1" />
-            </svg>
-            Token 消耗
-          </div>
-          <div class="stat-value">0<span class="stat-unit">K</span></div>
-          <div class="stat-sub">≈ ¥0.00</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M2 2H10V8H7L6 10L5 8H2V2Z" stroke="#B1BAC4" stroke-width="1" />
-            </svg>
-            提示词数
-          </div>
-          <div class="stat-value">0</div>
-          <div class="stat-sub">暂无评分</div>
-        </div>
-      </div>
+      <article class="surface-card stat-card">
+        <div class="stat-label">默认模型</div>
+        <div class="stat-value small">{{ modelLabel }}</div>
+        <div class="stat-sub">当前项目默认配置</div>
+      </article>
 
-      <!-- Two column -->
-      <div class="two-col">
-        <!-- Description + phases -->
-        <div class="desc-card">
-          <div class="card-title">
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <path d="M2 2H9L11 4V11H2V2Z" stroke="#B1BAC4" stroke-width="1" />
-              <path d="M9 2V4H11" stroke="#B1BAC4" stroke-width="1" />
-            </svg>
-            项目阶段
-          </div>
-          <div class="phase-list">
-            <div
-              v-for="phase in phaseList"
-              :key="phase.id"
-              class="phase-item"
-              :class="{ clickable: true }"
-              @click="goToPhase(phase.id)"
-            >
-              <span class="phase-num">{{ phase.num }}</span>
-              <span class="phase-name">{{ phase.name }}</span>
-              <span class="phase-status" :class="getPhaseStatusClass(phase.id)">
-                {{ getPhaseStatusLabel(phase.id) }}
-              </span>
+      <article class="surface-card stat-card">
+        <div class="stat-label">Token 消耗</div>
+        <div class="stat-value">0K</div>
+        <div class="stat-sub">尚未开始执行</div>
+      </article>
+
+      <article class="surface-card stat-card">
+        <div class="stat-label">提示词资产</div>
+        <div class="stat-value">0</div>
+        <div class="stat-sub">等待阶段内容沉淀</div>
+      </article>
+    </section>
+
+    <section class="content-grid">
+      <article class="surface-card phases-card">
+        <div class="section-title">项目阶段</div>
+        <div class="phase-list">
+          <button v-for="phase in phaseList" :key="phase.id" class="phase-item" type="button" @click="goToPhase(phase.id)">
+            <span class="phase-index">{{ phase.num }}</span>
+            <span class="phase-name">{{ phase.name }}</span>
+            <span class="phase-status" :class="getPhaseStatusClass(phase.id)">{{ getPhaseStatusLabel(phase.id) }}</span>
+          </button>
+        </div>
+      </article>
+
+      <article class="surface-card heatmap-card">
+        <div class="section-title">活跃热力图</div>
+        <div class="heatmap-wrap">
+          <div class="heatmap-grid">
+            <div v-for="w in 24" :key="w" class="heatmap-column">
+              <div v-for="d in 7" :key="d" class="heatmap-cell" :data-v="getHeatValue(w, d)" />
             </div>
           </div>
         </div>
-
-        <!-- Heatmap skeleton -->
-        <div class="heatmap-card">
-          <div class="card-title">
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <rect x="1.5" y="1.5" width="4" height="4" rx="0.5" stroke="#B1BAC4" stroke-width="1" />
-              <rect x="7.5" y="1.5" width="4" height="4" rx="0.5" stroke="#B1BAC4" stroke-width="1" />
-              <rect x="1.5" y="7.5" width="4" height="4" rx="0.5" stroke="#B1BAC4" stroke-width="1" />
-              <rect x="7.5" y="7.5" width="4" height="4" rx="0.5" stroke="#B1BAC4" stroke-width="1" />
-            </svg>
-            活跃度热力图
-            <span class="card-title-sub">过去 52 周</span>
-          </div>
-          <div class="heatmap-wrap">
-            <div class="heatmap-grid">
-              <div v-for="w in 52" :key="w" class="hm-col">
-                <div
-                  v-for="d in 7"
-                  :key="d"
-                  class="hm-cell"
-                  :data-v="getHeatValue(w, d)"
-                />
-              </div>
-            </div>
-          </div>
-          <div class="heatmap-footer">
-            <span class="hm-count">0 次活动</span>
-            <div class="hm-legend">
-              <span>少</span>
-              <div class="hm-legend-cell" style="background: #f0f2f5" />
-              <div class="hm-legend-cell" style="background: #d0e8ff" />
-              <div class="hm-legend-cell" style="background: #90c4ff" />
-              <div class="hm-legend-cell" style="background: #4da3ff" />
-              <div class="hm-legend-cell" style="background: #007aff" />
-              <span>多</span>
-            </div>
+        <div class="legend-row">
+          <span>最近 24 周暂未产生操作记录</span>
+          <div class="legend-scale">
+            <span>少</span>
+            <i class="legend-box level-0" />
+            <i class="legend-box level-1" />
+            <i class="legend-box level-2" />
+            <i class="legend-box level-3" />
+            <i class="legend-box level-4" />
+            <span>多</span>
           </div>
         </div>
-      </div>
+      </article>
+    </section>
 
-      <!-- Recent activity -->
-      <div class="card-title" style="margin-bottom: 10px">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-          <circle cx="6.5" cy="6.5" r="5" stroke="#B1BAC4" stroke-width="1" />
-          <path d="M6.5 3.5V6.5L8 8" stroke="#B1BAC4" stroke-width="1" />
-        </svg>
-        最近动态
-      </div>
-      <div v-if="activities.length > 0" class="activity-card">
-        <div v-for="(act, i) in activities" :key="i" class="activity-row">
-          <div class="activity-dot" :class="{ blue: act.important }" />
+    <article class="surface-card activity-card">
+      <div class="section-title">最近动态</div>
+      <div v-if="activities.length > 0" class="activity-list">
+        <div v-for="(act, i) in activities" :key="i" class="activity-item">
+          <span class="activity-dot" :class="{ important: act.important }" />
           <span class="activity-text">{{ act.text }}</span>
           <span class="activity-time">{{ act.time }}</span>
         </div>
       </div>
-      <div v-else class="empty-activity">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" opacity="0.3">
-          <circle cx="16" cy="16" r="14" stroke="#B1BAC4" stroke-width="1.5" />
-          <path d="M16 8V16L20 20" stroke="#B1BAC4" stroke-width="1.5" />
-        </svg>
-        <p>暂无活动记录</p>
-        <p>开始需求分析后，活动将在这里显示</p>
+      <div v-else class="activity-empty">
+        <strong>还没有项目动态</strong>
+        <p>开始需求分析后，这里会汇总最近的生成、编辑和阶段推进记录。</p>
       </div>
-    </div>
-  </div>
+    </article>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute, RouterLink } from 'vue-router'
-import { useRouter } from 'vue-router'
+import { useRoute, RouterLink, useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
 
@@ -215,7 +118,7 @@ const project = computed(() => projectStore.currentProject)
 
 const workspacePath = computed(() => {
   const ws = workspaceStore.currentWorkspace
-  if (!ws) return ''
+  if (!ws) return '未选择工作区'
   const parts = ws.path.split(/[/\\]/).filter(Boolean)
   return parts.length > 2 ? `.../${parts.slice(-2).join('/')}` : ws.path
 })
@@ -230,32 +133,32 @@ const phaseList = [
 
 const completedPhases = computed(() => {
   if (!project.value) return 0
-  return Object.values(project.value.phases).filter((p) => p.status === 'completed').length
+  return Object.values(project.value.phases).filter((phase) => phase.status === 'completed').length
 })
 
 const currentPhaseName = computed(() => {
-  if (!project.value) return '初始化'
-  const inProgress = Object.entries(project.value.phases).find(([, v]) => v.status === 'in_progress')
+  if (!project.value) return '初始化中'
+  const inProgress = Object.entries(project.value.phases).find(([, phase]) => phase.status === 'in_progress')
   if (inProgress) {
     const labels: Record<string, string> = {
-      requirements: '需求分析阶段',
-      prototype: '原型设计阶段',
-      tech: '技术选型阶段',
-      tasks: '任务开发阶段',
-      retrospective: '复盘总结阶段',
+      requirements: '需求分析进行中',
+      prototype: '原型设计进行中',
+      tech: '技术选型进行中',
+      tasks: '任务开发进行中',
+      retrospective: '复盘总结进行中',
     }
     return labels[inProgress[0]] ?? '进行中'
   }
-  if (completedPhases.value === 5) return '已完成'
+  if (completedPhases.value === 5) return '项目已完成'
   return '规划阶段'
 })
 
 const modelLabel = computed(() => {
   const model = project.value?.defaultModel ?? 'claude-sonnet-4-6'
   const labels: Record<string, string> = {
-    'claude-sonnet-4-6': 'Sonnet 4.6',
-    'claude-opus-4-6': 'Opus 4.6',
-    'claude-haiku-4-5-20251001': 'Haiku 4.5',
+    'claude-sonnet-4-6': 'Claude Sonnet 4.6',
+    'claude-opus-4-6': 'Claude Opus 4.6',
+    'claude-haiku-4-5-20251001': 'Claude Haiku 4.5',
   }
   return labels[model] ?? model
 })
@@ -273,15 +176,15 @@ function getPhaseStatusLabel(phaseId: string): string {
 }
 
 function getPhaseStatusClass(phaseId: string): string {
-  if (!project.value) return 'ps-todo'
+  if (!project.value) return 'status-todo'
   const phase = (project.value.phases as Record<string, { status: string }>)[phaseId]
   const classes: Record<string, string> = {
-    not_started: 'ps-todo',
-    in_progress: 'ps-active',
-    completed: 'ps-done',
-    locked: 'ps-done',
+    not_started: 'status-todo',
+    in_progress: 'status-active',
+    completed: 'status-done',
+    locked: 'status-done',
   }
-  return classes[phase?.status ?? 'not_started'] ?? 'ps-todo'
+  return classes[phase?.status ?? 'not_started'] ?? 'status-todo'
 }
 
 function goToPhase(phaseId: string) {
@@ -295,7 +198,7 @@ function goToPhase(phaseId: string) {
   const routeName = routeMap[phaseId]
   if (routeName) {
     projectStore.setActivePhase(phaseId)
-    router.push({ name: routeName, params: { id: projectId.value } })
+    void router.push({ name: routeName, params: { id: projectId.value } })
   }
 }
 
@@ -305,344 +208,360 @@ function formatDate(iso?: string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// Activity placeholder
 const activities = ref<Array<{ text: string; time: string; important: boolean }>>([])
 
-// Heatmap - all empty for new project
 function getHeatValue(_w: number, _d: number): number {
   return 0
 }
 </script>
 
 <style scoped>
-.overview {
-  flex: 1;
+.overview-page {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  gap: 18px;
 }
 
-/* Topbar */
-.topbar {
-  height: var(--topbar-height);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  padding: 0 24px;
-  gap: 8px;
-  flex-shrink: 0;
-}
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-}
-.bc-sep {
-  color: var(--text-3);
-}
-.bc-item {
-  color: var(--text-2);
-}
-.bc-current {
-  color: var(--text-1);
-  font-weight: 500;
-}
-.topbar-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 8px;
+.surface-card {
+  padding: 22px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(13, 17, 23, 0.06);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
 }
 
-/* Content */
-.content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 28px;
+.surface-card-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 22px;
 }
 
-/* Project header */
-.project-header {
-  margin-bottom: 28px;
-}
-.project-title-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-.project-title {
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--text-1);
-  letter-spacing: -0.5px;
-}
-.phase-badge {
-  font-size: 11.5px;
-  padding: 3px 10px;
-  border-radius: 100px;
-  background: var(--accent-bg);
-  color: var(--accent);
-  font-weight: 500;
-}
-.project-meta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  font-size: 12.5px;
-  color: var(--text-2);
-}
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-/* Stats */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 24px;
-}
-.stat-card {
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 18px 20px;
-}
+.eyebrow,
+.section-title,
 .stat-label {
-  font-size: 11.5px;
-  color: var(--text-2);
-  margin-bottom: 8px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-}
-.stat-value {
-  font-size: 28px;
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 122, 255, 0.08);
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.section-title,
+.stat-label {
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+
+h2 {
+  font-size: clamp(28px, 4vw, 36px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  margin-bottom: 10px;
+}
+
+.hero-copy {
+  max-width: 680px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-2);
+}
+
+.hero-meta {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid rgba(13, 17, 23, 0.06);
+  color: var(--text-2);
+  font-size: 12px;
+}
+
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 180px;
+}
+
+.ghost-btn {
+  padding: 8px 14px;
+  font-size: 12px;
+  border: 1px solid rgba(13, 17, 23, 0.08);
+  background: white;
   color: var(--text-1);
-  letter-spacing: -1px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  min-height: 158px;
+}
+
+.accent-card {
+  background: linear-gradient(180deg, rgba(235, 245, 255, 0.92), rgba(255, 255, 255, 0.92));
+}
+
+.stat-value {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.05em;
   line-height: 1;
 }
-.stat-value-sm {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-1);
-  line-height: 1.4;
+
+.stat-value.small {
+  font-size: 20px;
+  line-height: 1.2;
 }
-.stat-unit {
-  font-size: 16px;
-  font-weight: 400;
-  color: var(--text-2);
-  margin-left: 2px;
-}
+
 .stat-sub {
+  margin-top: 8px;
+  color: var(--text-2);
   font-size: 12px;
-  color: var(--text-3);
-  margin-top: 4px;
 }
-.stat-progress {
-  margin-top: 10px;
-  height: 3px;
-  background: var(--border);
-  border-radius: 2px;
+
+.progress-track {
+  margin-top: 16px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(13, 17, 23, 0.08);
   overflow: hidden;
 }
-.stat-bar {
+
+.progress-bar {
   height: 100%;
-  background: var(--accent);
-  border-radius: 2px;
-  transition: width 0.4s ease;
+  background: linear-gradient(90deg, #007aff 0%, #71a7ff 100%);
 }
 
-/* Two col */
-.two-col {
+.content-grid {
   display: grid;
-  grid-template-columns: 1fr 1.4fr;
-  gap: 16px;
-  margin-bottom: 20px;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
 }
 
-/* Description card */
-.desc-card {
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 20px;
-}
-.card-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-1);
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.card-title-sub {
-  font-size: 11px;
-  color: var(--text-3);
-  font-weight: 400;
-  margin-left: 4px;
-}
 .phase-list {
   display: flex;
   flex-direction: column;
-}
-.phase-item {
-  display: flex;
-  align-items: center;
   gap: 10px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.1s;
-  border-radius: var(--r-xs);
-  padding-left: 4px;
-  padding-right: 4px;
-}
-.phase-item:last-child {
-  border-bottom: none;
-}
-.phase-item:hover {
-  background: var(--hover);
-}
-.phase-num {
-  font-size: 11px;
-  color: var(--text-3);
-  width: 16px;
-  text-align: right;
-  flex-shrink: 0;
-}
-.phase-name {
-  flex: 1;
-  color: var(--text-1);
-}
-.phase-status {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 100px;
-  font-weight: 500;
-}
-.ps-done {
-  background: #ebf5ff;
-  color: var(--accent);
-}
-.ps-active {
-  background: #fff3e0;
-  color: #e67e22;
-}
-.ps-todo {
-  background: var(--surface);
-  color: var(--text-3);
 }
 
-/* Heatmap */
-.heatmap-card {
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 20px;
-}
-.heatmap-wrap {
-  overflow-x: auto;
-  margin-bottom: 8px;
-}
-.heatmap-grid {
-  display: flex;
-  gap: 3px;
-}
-.hm-col {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.hm-cell {
-  width: 11px;
-  height: 11px;
-  border-radius: 2px;
-  background: #f0f2f5;
-}
-.hm-cell[data-v='1'] {
-  background: #d0e8ff;
-}
-.hm-cell[data-v='2'] {
-  background: #90c4ff;
-}
-.hm-cell[data-v='3'] {
-  background: #4da3ff;
-}
-.hm-cell[data-v='4'] {
-  background: #007aff;
-}
-.heatmap-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.hm-count {
-  font-size: 11px;
-  color: var(--text-3);
-}
-.hm-legend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--text-3);
-}
-.hm-legend-cell {
-  width: 11px;
-  height: 11px;
-  border-radius: 2px;
-}
-
-/* Activity */
-.activity-card {
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  overflow: hidden;
-}
-.activity-row {
+.phase-item {
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 20px;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
+  padding: 14px;
+  border: 1px solid rgba(13, 17, 23, 0.06);
+  border-radius: 16px;
+  background: white;
+  cursor: pointer;
+  transition:
+    transform 0.14s ease,
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
 }
-.activity-row:last-child {
-  border-bottom: none;
+
+.phase-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(0, 122, 255, 0.18);
+  box-shadow: 0 12px 30px rgba(0, 122, 255, 0.08);
 }
+
+.phase-index {
+  width: 28px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.phase-name {
+  flex: 1;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.phase-status {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-done {
+  background: rgba(0, 122, 255, 0.1);
+  color: var(--accent);
+}
+
+.status-active {
+  background: rgba(254, 188, 46, 0.16);
+  color: #a36800;
+}
+
+.status-todo {
+  background: rgba(13, 17, 23, 0.06);
+  color: var(--text-3);
+}
+
+.heatmap-wrap {
+  overflow: auto;
+}
+
+.heatmap-grid {
+  display: flex;
+  gap: 4px;
+}
+
+.heatmap-column {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.heatmap-cell,
+.legend-box {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: #eef2f6;
+}
+
+.heatmap-cell[data-v='1'],
+.legend-box.level-1 {
+  background: #d0e8ff;
+}
+
+.heatmap-cell[data-v='2'],
+.legend-box.level-2 {
+  background: #90c4ff;
+}
+
+.heatmap-cell[data-v='3'],
+.legend-box.level-3 {
+  background: #4da3ff;
+}
+
+.heatmap-cell[data-v='4'],
+.legend-box.level-4 {
+  background: #007aff;
+}
+
+.legend-row {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-2);
+  font-size: 12px;
+}
+
+.legend-scale {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: white;
+  border: 1px solid rgba(13, 17, 23, 0.06);
+}
+
 .activity-dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--text-3);
-  flex-shrink: 0;
 }
-.activity-dot.blue {
+
+.activity-dot.important {
   background: var(--accent);
 }
+
 .activity-text {
   flex: 1;
   color: var(--text-1);
 }
+
 .activity-time {
-  font-size: 11.5px;
   color: var(--text-3);
+  font-size: 12px;
 }
-.empty-activity {
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 40px 20px;
+
+.activity-empty {
+  min-height: 140px;
+  display: grid;
+  place-items: center;
   text-align: center;
-  color: var(--text-3);
-  font-size: 13px;
-  line-height: 1.8;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  color: var(--text-2);
+}
+
+.activity-empty p {
+  max-width: 420px;
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+@media (max-width: 1100px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .content-grid,
+  .surface-card-hero {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+}
+
+@media (max-width: 720px) {
+  .surface-card {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .legend-row,
+  .hero-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>
