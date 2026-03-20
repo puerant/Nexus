@@ -1,4 +1,4 @@
-*, *::before, *::after {
+﻿*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -31,6 +31,7 @@
   --titlebar-height: 40px;
   /* Topbar */
   --topbar-height: 48px;
+  --toolbar-height: 56px;
 }
 
 html, body, #app {

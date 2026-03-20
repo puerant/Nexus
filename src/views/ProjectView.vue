@@ -1,187 +1,119 @@
-<template>
-  <div class="app-layout">
-    <!-- Titlebar (macOS-style) -->
-    <div class="titlebar" data-tauri-drag-region>
-      <div class="wc">
-        <span class="wc-dot r" @click="appWindow.close()" />
-        <span class="wc-dot y" @click="appWindow.minimize()" />
-        <span class="wc-dot g" @click="toggleMaximize()" />
-      </div>
-      <div class="titlebar-center">
-        <span class="titlebar-ws">{{ wsName }}</span>
-        <span v-if="projectStore.currentProject" class="titlebar-sep">/</span>
-        <span v-if="projectStore.currentProject" class="titlebar-proj">
-          {{ projectStore.currentProject.name }}
-        </span>
-      </div>
-      <div class="titlebar-right">
-        <button class="tb-btn">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path
-              d="M2 6C2 3.8 3.8 2 6 2C8.2 2 10 3.8 10 6"
-              stroke="#6E7781"
-              stroke-width="1"
-            />
-            <path d="M10 4L10 6L8 6" stroke="#6E7781" stroke-width="1" />
-          </svg>
-          同步
-        </button>
-      </div>
-    </div>
+﻿<template>
+  <AppLayout :title="projectTitle" :subtitle="workspaceSubtitle">
+    <template #topbar-actions>
+      <button class="topbar-chip" type="button" @click="router.push({ name: 'sync' })">同步</button>
+      <button class="topbar-chip" type="button" @click="router.push({ name: 'settings' })">设置</button>
+    </template>
 
-    <div class="layout">
-      <!-- Sidebar -->
+    <div class="project-shell">
       <aside class="sidebar">
-        <div class="sb-head">
-          <div class="sb-logo">
-            <div class="logo-mark">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M7 1L13 4.5V9.5L7 13L1 9.5V4.5L7 1Z"
-                  stroke="white"
-                  stroke-width="1"
-                  fill="none"
-                />
-              </svg>
-            </div>
-            <span class="logo-name">AI Workflow</span>
-          </div>
-          <div v-if="projectStore.currentProject" class="sb-project">
-            <div class="sb-project-label">当前项目</div>
-            <div class="sb-project-name">
-              {{ projectStore.currentProject.name }}
-              <span class="sb-project-badge">{{ currentPhaseLabel }}</span>
-            </div>
-          </div>
+        <div class="sidebar-head">
+          <div class="sidebar-label">当前项目</div>
+          <div class="sidebar-title">{{ projectStore.currentProject?.name || '未命名项目' }}</div>
+          <div class="sidebar-caption">{{ currentPhaseLabel }}</div>
         </div>
 
-        <nav class="sb-nav">
+        <nav class="sidebar-nav">
           <RouterLink
-            :to="{ name: 'project-overview', params: { id: projectId } }"
+            v-for="item in navItems"
+            :key="item.phase"
+            :to="{ name: item.routeName, params: { id: projectId } }"
             class="nav-item"
-            :class="{ active: activePhase === 'overview' }"
-            @click="projectStore.setActivePhase('overview')"
+            :class="{ active: activePhase === item.phase }"
+            @click="projectStore.setActivePhase(item.phase)"
           >
-            <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-              <path d="M2 7L8 2.5L14 7V14H10.5V10H5.5V14H2V7Z" stroke="currentColor" stroke-width="1" />
-            </svg>
-            概览
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'requirements', params: { id: projectId } }"
-            class="nav-item"
-            :class="{ active: activePhase === 'requirements' }"
-            @click="projectStore.setActivePhase('requirements')"
-          >
-            <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-              <path d="M4 2H10L13 5V14H4V2Z" stroke="currentColor" stroke-width="1" />
-              <path d="M10 2V5H13" stroke="currentColor" stroke-width="1" />
-              <path d="M6.5 8H10.5M6.5 11H9" stroke="currentColor" stroke-width="1" />
-            </svg>
-            需求分析
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'prototype', params: { id: projectId } }"
-            class="nav-item"
-            :class="{ active: activePhase === 'prototype' }"
-            @click="projectStore.setActivePhase('prototype')"
-          >
-            <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-              <rect x="2" y="3" width="12" height="10" rx="1" stroke="currentColor" stroke-width="1" />
-              <path d="M2 6.5H14" stroke="currentColor" stroke-width="1" />
-              <circle cx="4.5" cy="4.75" r="0.75" fill="currentColor" />
-              <circle cx="7" cy="4.75" r="0.75" fill="currentColor" />
-            </svg>
-            原型设计
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'tech', params: { id: projectId } }"
-            class="nav-item"
-            :class="{ active: activePhase === 'tech' }"
-            @click="projectStore.setActivePhase('tech')"
-          >
-            <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-              <path d="M2 4L6 8L2 12" stroke="currentColor" stroke-width="1" />
-              <path d="M8 12H14" stroke="currentColor" stroke-width="1" />
-            </svg>
-            技术选型
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'tasks', params: { id: projectId } }"
-            class="nav-item"
-            :class="{ active: activePhase === 'tasks' }"
-            @click="projectStore.setActivePhase('tasks')"
-          >
-            <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-              <rect x="2" y="2" width="3.5" height="12" rx="1" stroke="currentColor" stroke-width="1" />
-              <rect x="6.5" y="2" width="3.5" height="8" rx="1" stroke="currentColor" stroke-width="1" />
-              <rect x="11" y="2" width="3.5" height="10" rx="1" stroke="currentColor" stroke-width="1" />
-            </svg>
-            任务看板
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'retrospective', params: { id: projectId } }"
-            class="nav-item"
-            :class="{ active: activePhase === 'retrospective' }"
-            @click="projectStore.setActivePhase('retrospective')"
-          >
-            <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-              <path d="M3 12L6 8.5L9 10.5L13 5" stroke="currentColor" stroke-width="1" />
-              <path d="M2 14H14" stroke="currentColor" stroke-width="1" />
-            </svg>
-            复盘总结
+            <span class="nav-icon" v-html="item.icon" />
+            <span>{{ item.label }}</span>
           </RouterLink>
         </nav>
-
-        <div class="sb-footer">
-          <RouterLink :to="{ name: 'settings' }" class="nav-item">
-            <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1" />
-              <path
-                d="M8 1.5V3M8 13V14.5M1.5 8H3M13 8H14.5M3.5 3.5L4.5 4.5M11.5 11.5L12.5 12.5M3.5 12.5L4.5 11.5M11.5 4.5L12.5 3.5"
-                stroke="currentColor"
-                stroke-width="1"
-              />
-            </svg>
-            设置
-          </RouterLink>
-        </div>
       </aside>
 
-      <!-- Main work area -->
-      <main class="main">
-        <RouterView />
-      </main>
+      <section class="project-main">
+        <header class="project-header">
+          <div>
+            <div class="eyebrow">Project Workspace</div>
+            <h1>{{ currentPhaseLabel }}</h1>
+            <p class="project-subtitle">{{ projectStore.currentProject?.description || '围绕当前阶段推进需求、原型、技术方案和任务协作。' }}</p>
+          </div>
+          <div class="project-status">
+            <span class="status-dot" />
+            <span>{{ projectStore.currentProject?.sync?.type === 'github' ? 'GitHub 已连接' : '本地模式' }}</span>
+          </div>
+        </header>
+
+        <div class="project-content">
+          <RouterView />
+        </div>
+      </section>
     </div>
-  </div>
+
+    <template #toolbar>
+      <div class="toolbar-group">
+        <button class="toolbar-btn" type="button" @click="openPowerShell">PowerShell</button>
+        <button class="toolbar-btn" type="button" @click="openWorkspaceFolder">打开项目目录</button>
+      </div>
+      <div class="toolbar-group toolbar-meta">
+        <span class="toolbar-hint">{{ workspaceSubtitle }}</span>
+      </div>
+    </template>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { useRoute, RouterLink, RouterView } from 'vue-router'
+import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router'
+import { open } from '@tauri-apps/plugin-shell'
+import AppLayout from '@/components/AppLayout.vue'
 import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { readProjectConfig } from '@/api/workspace'
-import { getCurrentWindow } from '@tauri-apps/api/window'
 
 const route = useRoute()
+const router = useRouter()
 const projectStore = useProjectStore()
 const workspaceStore = useWorkspaceStore()
 
-const appWindow = getCurrentWindow()
 const projectId = computed(() => route.params.id as string)
 const activePhase = computed(() => projectStore.activePhase)
 
-const wsName = computed(() => {
-  const ws = workspaceStore.currentWorkspace
-  if (!ws) return ''
-  return ws.path.split(/[/\\]/).filter(Boolean).slice(-2, -1)[0] ?? ''
-})
+const navItems = [
+  {
+    phase: 'overview',
+    routeName: 'project-overview',
+    label: '概览',
+    icon: '<svg viewBox="0 0 16 16" fill="none"><path d="M2 7L8 2.5L14 7V14H10.5V10H5.5V14H2V7Z" stroke="currentColor" stroke-width="1"/></svg>',
+  },
+  {
+    phase: 'requirements',
+    routeName: 'requirements',
+    label: '需求分析',
+    icon: '<svg viewBox="0 0 16 16" fill="none"><path d="M4 2H10L13 5V14H4V2Z" stroke="currentColor" stroke-width="1"/><path d="M10 2V5H13" stroke="currentColor" stroke-width="1"/><path d="M6.5 8H10.5M6.5 11H9" stroke="currentColor" stroke-width="1"/></svg>',
+  },
+  {
+    phase: 'prototype',
+    routeName: 'prototype',
+    label: '原型设计',
+    icon: '<svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="1" stroke="currentColor" stroke-width="1"/><path d="M2 6.5H14" stroke="currentColor" stroke-width="1"/><circle cx="4.5" cy="4.75" r="0.75" fill="currentColor"/><circle cx="7" cy="4.75" r="0.75" fill="currentColor"/></svg>',
+  },
+  {
+    phase: 'tech',
+    routeName: 'tech',
+    label: '技术选型',
+    icon: '<svg viewBox="0 0 16 16" fill="none"><path d="M2 4L6 8L2 12" stroke="currentColor" stroke-width="1"/><path d="M8 12H14" stroke="currentColor" stroke-width="1"/></svg>',
+  },
+  {
+    phase: 'tasks',
+    routeName: 'tasks',
+    label: '任务看板',
+    icon: '<svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="3.5" height="12" rx="1" stroke="currentColor" stroke-width="1"/><rect x="6.5" y="2" width="3.5" height="8" rx="1" stroke="currentColor" stroke-width="1"/><rect x="11" y="2" width="3.5" height="10" rx="1" stroke="currentColor" stroke-width="1"/></svg>',
+  },
+  {
+    phase: 'retrospective',
+    routeName: 'retrospective',
+    label: '复盘总结',
+    icon: '<svg viewBox="0 0 16 16" fill="none"><path d="M3 12L6 8.5L9 10.5L13 5" stroke="currentColor" stroke-width="1"/><path d="M2 14H14" stroke="currentColor" stroke-width="1"/></svg>',
+  },
+] as const
 
 const currentPhaseLabel = computed(() => {
   const phase = activePhase.value
@@ -190,23 +122,16 @@ const currentPhaseLabel = computed(() => {
     requirements: '需求分析',
     prototype: '原型设计',
     tech: '技术选型',
-    tasks: '任务开发',
+    tasks: '任务看板',
     retrospective: '复盘总结',
   }
   return labels[phase] ?? '进行中'
 })
 
-async function toggleMaximize() {
-  const maximized = await appWindow.isMaximized()
-  if (maximized) {
-    await appWindow.unmaximize()
-  } else {
-    await appWindow.maximize()
-  }
-}
+const projectTitle = computed(() => projectStore.currentProject?.name || 'AI Workflow')
+const workspaceSubtitle = computed(() => workspaceStore.currentWorkspace?.path || '当前未选择工作区')
 
 onMounted(async () => {
-  // Load project config if not already loaded
   if (!projectStore.currentProject && workspaceStore.currentWorkspace) {
     try {
       const config = await readProjectConfig(workspaceStore.currentWorkspace.path)
@@ -218,206 +143,228 @@ onMounted(async () => {
     }
   }
 })
+
+async function openPowerShell() {
+  await open('C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe')
+}
+
+async function openWorkspaceFolder() {
+  const path = workspaceStore.currentWorkspace?.path ?? 'C:/'
+  await open(path, 'explorer.exe')
+}
 </script>
 
 <style scoped>
-.app-layout {
-  width: 100%;
-  height: 100%;
-  background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  border-radius: 14px;
-  overflow: hidden;
+.project-shell {
+  min-height: 100%;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
 }
 
-/* Titlebar */
-.titlebar {
-  height: var(--titlebar-height);
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  flex-shrink: 0;
-  user-select: none;
-}
-.wc {
-  display: flex;
-  gap: 8px;
-}
-.wc-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: block;
-  transition: opacity 0.1s;
-}
-.wc-dot:hover {
-  opacity: 0.8;
-}
-.wc-dot.r {
-  background: #ff5f57;
-}
-.wc-dot.y {
-  background: #febc2e;
-}
-.wc-dot.g {
-  background: #28c840;
-}
-.titlebar-center {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.titlebar-ws {
-  font-size: 13px;
-  color: var(--text-2);
-}
-.titlebar-sep {
-  font-size: 13px;
-  color: var(--text-3);
-}
-.titlebar-proj {
-  font-size: 13px;
-  color: var(--text-1);
-  font-weight: 500;
-}
-.titlebar-right {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.tb-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  color: var(--text-2);
-  border: 1px solid var(--border);
-  background: white;
-  cursor: pointer;
-  font-family: var(--font);
-  transition: all 0.1s;
-}
-.tb-btn:hover {
-  background: var(--hover);
-  color: var(--text-1);
-}
-
-/* Layout */
-.layout {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
-
-/* Sidebar */
 .sidebar {
-  width: var(--sidebar-width);
-  background: var(--surface);
-  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  min-height: 0;
+  padding: 22px 14px 16px;
+  background: rgba(255, 255, 255, 0.5);
+  border-right: 1px solid rgba(13, 17, 23, 0.08);
 }
-.sb-head {
-  padding: 18px 14px 14px;
-  border-bottom: 1px solid var(--border);
+
+.sidebar-head {
+  padding: 10px 8px 18px;
 }
-.sb-logo {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-.logo-mark {
-  width: 26px;
-  height: 26px;
-  background: var(--accent);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.logo-name {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-1);
-}
-.sb-project {
-  margin-top: 10px;
-}
-.sb-project-label {
-  font-size: 10px;
+
+.sidebar-label {
+  font-size: 11px;
   color: var(--text-3);
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin-bottom: 3px;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
 }
-.sb-project-name {
-  font-size: 12.5px;
-  color: var(--text-1);
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
+
+.sidebar-title {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
 }
-.sb-project-badge {
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 100px;
-  background: var(--accent-bg);
+
+.sidebar-caption {
+  margin-top: 8px;
+  font-size: 12px;
   color: var(--accent);
-  font-weight: 500;
 }
-.sb-nav {
-  flex: 1;
-  padding: 8px;
-  overflow-y: auto;
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  overflow: auto;
 }
+
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 8px;
-  border-radius: var(--r-xs);
-  cursor: pointer;
-  transition: background 0.1s;
+  gap: 10px;
+  padding: 12px 12px;
+  border-radius: 16px;
   text-decoration: none;
   color: var(--text-2);
-  font-size: 13px;
-  margin-bottom: 2px;
+  transition:
+    transform 0.14s ease,
+    background 0.14s ease,
+    color 0.14s ease;
 }
-.nav-item:hover {
-  background: var(--hover);
+
+.nav-item:hover,
+.nav-item.active {
+  transform: translateX(2px);
+  background: white;
   color: var(--text-1);
 }
+
 .nav-item.active {
-  background: var(--accent-bg);
-  color: var(--accent);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
+
 .nav-icon {
-  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-icon :deep(svg) {
   width: 16px;
   height: 16px;
 }
-.sb-footer {
-  padding: 8px;
-  border-top: 1px solid var(--border);
-}
 
-/* Main */
-.main {
-  flex: 1;
+.project-main {
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  padding: clamp(22px, 3vw, 32px);
+  gap: 20px;
+}
+
+.project-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 122, 255, 0.08);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+h1 {
+  font-size: clamp(28px, 4vw, 36px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  margin-bottom: 10px;
+}
+
+.project-subtitle {
+  max-width: 700px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+.project-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(13, 17, 23, 0.08);
+  color: var(--text-2);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.project-content {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+}
+
+.topbar-chip,
+.toolbar-btn {
+  padding: 8px 14px;
+  font-size: 12px;
+  border: 1px solid rgba(13, 17, 23, 0.08);
+  background: white;
+  color: var(--text-1);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    transform 0.14s ease,
+    border-color 0.14s ease,
+    background 0.14s ease;
+}
+
+.topbar-chip:hover,
+.toolbar-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(0, 122, 255, 0.22);
+  background: var(--accent-bg);
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toolbar-meta {
+  color: var(--text-2);
+}
+
+.toolbar-hint {
+  font-size: 12px;
+}
+
+@media (max-width: 960px) {
+  .project-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid rgba(13, 17, 23, 0.08);
+  }
+}
+
+@media (max-width: 720px) {
+  .project-main {
+    padding: 16px;
+  }
+
+  .project-header {
+    flex-direction: column;
+  }
 }
 </style>

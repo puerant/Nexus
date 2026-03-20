@@ -1,64 +1,51 @@
-<template>
-  <div class="workspace-screen">
-    <div class="app-card">
-      <!-- Title bar -->
-      <div class="titlebar">
-        <div class="wc">
-          <span class="wc-dot r" />
-          <span class="wc-dot y" />
-          <span class="wc-dot g" />
-        </div>
-        <button class="titlebar-back" @click="router.back()">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M9 11L5 7L9 3" stroke="#007AFF" stroke-width="1" />
-          </svg>
-          返回
-        </button>
-        <span class="titlebar-title">配置同步</span>
-        <span class="titlebar-spacer" />
-      </div>
+﻿<template>
+  <AppLayout title="同步配置" subtitle="选择工作区的同步方式">
+    <template #topbar-actions>
+      <button class="topbar-chip" type="button" @click="router.back()">返回</button>
+    </template>
 
-      <div class="content">
-        <!-- Step indicator -->
-        <div class="step-indicator">
-          <div class="step-dot done" />
-          <div class="step-line done" />
-          <div class="step-dot active" />
-          <div class="step-line" />
-          <div class="step-dot" />
+    <div class="sync-screen">
+      <section class="sync-panel">
+        <div class="hero-row">
+          <div>
+            <div class="eyebrow">Step 2</div>
+            <h1>配置同步方式</h1>
+            <p class="subtitle">选择如何同步你的工作区。你可以先不配置，稍后再在设置中补充。</p>
+          </div>
+
+          <div class="step-indicator" aria-label="步骤进度">
+            <div class="step-dot done" />
+            <div class="step-line done" />
+            <div class="step-dot active" />
+            <div class="step-line" />
+            <div class="step-dot" />
+          </div>
         </div>
 
-        <h2>配置同步方式</h2>
-        <p class="subtitle">选择如何同步你的工作区。可以随时在设置中更改。</p>
-
-        <div class="options">
-          <!-- GitHub option -->
-          <div
-            class="option-card"
-            :class="{ selected: syncType === 'github' }"
-            @click="syncType = 'github'"
-          >
-            <div class="option-radio" />
+        <div class="options-grid">
+          <article class="option-card" :class="{ selected: syncType === 'github' }" @click="syncType = 'github'">
             <div class="option-head">
-              <div class="option-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <div class="option-badge">推荐</div>
+              <div class="option-radio" />
+            </div>
+            <div class="option-body">
+              <div class="option-icon github-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path
                     fill-rule="evenodd"
                     clip-rule="evenodd"
                     d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"
-                    stroke="#6E7781"
-                    stroke-width="0.5"
-                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="0.6"
                   />
                 </svg>
               </div>
               <div>
-                <div class="option-label">连接 GitHub 仓库</div>
-                <div class="option-desc">将文档同步到 GitHub，支持版本控制和团队协作</div>
+                <h2>连接 GitHub 仓库</h2>
+                <p class="option-desc">把工作区配置同步到 GitHub，便于版本管理、团队协作和跨设备使用。</p>
               </div>
             </div>
 
-            <!-- GitHub form -->
             <div v-if="syncType === 'github'" class="github-form">
               <div>
                 <label class="field-label">仓库地址</label>
@@ -69,14 +56,9 @@
                     type="text"
                     placeholder="https://github.com/username/repo"
                   />
-                  <button class="connect-btn" @click.stop="verifyRepo">
-                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                      <path d="M9 1H12V4M12 1L7 6M2 3H4.5V10.5H12" stroke="#6E7781" stroke-width="1" />
-                    </svg>
-                    验证
-                  </button>
+                  <button class="connect-btn" type="button" @click.stop="verifyRepo">验证</button>
                 </div>
-                <div class="field-hint">支持 HTTPS 或 SSH 格式</div>
+                <div class="field-hint">支持 HTTPS 或 SSH 格式。</div>
               </div>
               <div>
                 <label class="field-label">Personal Access Token（可选）</label>
@@ -86,52 +68,57 @@
                   type="password"
                   placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
                 />
-                <div class="field-hint">用于私有仓库访问。令牌仅存储在本地。</div>
+                <div class="field-hint">仅在访问私有仓库时需要，本地保存。</div>
               </div>
             </div>
-          </div>
+          </article>
 
-          <!-- No sync option -->
-          <div
-            class="option-card"
-            :class="{ selected: syncType === 'none' }"
-            @click="syncType = 'none'"
-          >
-            <div class="option-radio" />
+          <article class="option-card muted" :class="{ selected: syncType === 'none' }" @click="syncType = 'none'">
             <div class="option-head">
+              <div class="option-badge neutral">稍后配置</div>
+              <div class="option-radio" />
+            </div>
+            <div class="option-body">
               <div class="option-icon">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <circle cx="10" cy="10" r="7.5" stroke="#6E7781" stroke-width="1" />
-                  <path d="M4.5 4.5L15.5 15.5" stroke="#6E7781" stroke-width="1" />
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1" />
+                  <path d="M4.5 4.5L15.5 15.5" stroke="currentColor" stroke-width="1" />
                 </svg>
               </div>
               <div>
-                <div class="option-label">暂不同步</div>
-                <div class="option-desc">
-                  仅保存在本地文件夹，不连接任何远程仓库，可以随时在设置中开启
-                </div>
+                <h2>暂不同步</h2>
+                <p class="option-desc">先在本地创建项目结构，之后可以再接入 GitHub 或其他同步方式。</p>
               </div>
             </div>
-          </div>
+          </article>
         </div>
 
-        <div class="btn-row">
-          <button class="btn btn-ghost" @click="router.back()">返回</button>
-          <button class="btn btn-primary" :disabled="isLoading" @click="proceed">
-            {{ isLoading ? '初始化中...' : '进入工作区' }}
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M5 3L9 7L5 11" stroke="white" stroke-width="1" />
-            </svg>
+        <div class="actions">
+          <button class="btn btn-ghost" type="button" @click="router.back()">返回上一步</button>
+          <button class="btn btn-primary" type="button" :disabled="isLoading" @click="proceed">
+            {{ isLoading ? '初始化中…' : '继续进入项目' }}
           </button>
         </div>
-      </div>
+      </section>
     </div>
-  </div>
+
+    <template #toolbar>
+      <div class="toolbar-group">
+        <button class="toolbar-btn" type="button" @click="openPowerShell">PowerShell</button>
+        <button class="toolbar-btn" type="button" @click="openWorkspaceFolder">打开工作区</button>
+      </div>
+      <div class="toolbar-group toolbar-meta">
+        <span class="toolbar-hint">同步准备阶段</span>
+      </div>
+    </template>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { open } from '@tauri-apps/plugin-shell'
+import AppLayout from '@/components/AppLayout.vue'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useProjectStore } from '@/stores/project'
 import { initProjectStructure, writeProjectConfig } from '@/api/workspace'
@@ -146,23 +133,20 @@ const githubToken = ref('')
 const isLoading = ref(false)
 
 function verifyRepo() {
-  // TODO: Implement GitHub repo verification in M7
-  alert('仓库验证功能将在后续版本中实现')
+  alert('仓库验证功能将在后续版本提供。')
 }
 
 async function proceed() {
   const ws = workspaceStore.currentWorkspace
   if (!ws) {
-    router.push({ name: 'workspace' })
+    await router.push({ name: 'workspace' })
     return
   }
 
   isLoading.value = true
   try {
-    // Initialize .ai-workflow/ structure
     await initProjectStructure(ws.path, ws.name)
 
-    // Update project config with sync settings
     const syncConfig =
       syncType.value === 'github'
         ? { type: 'github', repoUrl: githubRepo.value }
@@ -173,7 +157,6 @@ async function proceed() {
       updatedAt: new Date().toISOString(),
     } as Record<string, unknown>)
 
-    // Set up project store - create minimal project object
     projectStore.setCurrentProject({
       id: ws.path,
       name: ws.name,
@@ -200,287 +183,325 @@ async function proceed() {
     isLoading.value = false
   }
 }
+
+async function openPowerShell() {
+  await open('C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe')
+}
+
+async function openWorkspaceFolder() {
+  const path = workspaceStore.currentWorkspace?.path ?? 'C:/'
+  await open(path, 'explorer.exe')
+}
 </script>
 
 <style scoped>
-.workspace-screen {
-  width: 100%;
-  height: 100%;
-  background: #1c1c1e;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.sync-screen {
+  min-height: 100%;
+  padding: clamp(22px, 3vw, 32px);
 }
 
-.app-card {
-  width: 560px;
-  background: var(--bg);
-  border-radius: 14px;
-  box-shadow:
-    0 32px 80px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.06);
-  overflow: hidden;
+.sync-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-height: 100%;
 }
 
-.titlebar {
-  height: var(--titlebar-height);
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+.hero-row {
   display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.eyebrow {
+  display: inline-flex;
   align-items: center;
-  padding: 0 16px;
-  user-select: none;
-}
-.wc {
-  display: flex;
-  gap: 8px;
-}
-.wc-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: block;
-}
-.wc-dot.r {
-  background: #ff5f57;
-}
-.wc-dot.y {
-  background: #febc2e;
-}
-.wc-dot.g {
-  background: #28c840;
-}
-.titlebar-back {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 122, 255, 0.08);
   color: var(--accent);
-  cursor: pointer;
-  background: none;
-  border: none;
-  padding: 4px 8px;
-  margin-left: 8px;
-  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
 }
-.titlebar-title {
-  flex: 1;
-  text-align: center;
-  font-size: 13px;
+
+h1 {
+  font-size: clamp(28px, 4vw, 36px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  max-width: 560px;
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--text-2);
 }
-.titlebar-spacer {
-  width: 80px;
-}
 
-.content {
-  padding: 36px 40px 40px;
-}
-
-/* Step indicator */
 .step-indicator {
   display: flex;
   align-items: center;
-  gap: 0;
-  margin-bottom: 28px;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(13, 17, 23, 0.06);
 }
+
 .step-dot {
-  width: 6px;
-  height: 6px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: var(--border);
-  flex-shrink: 0;
+  background: rgba(13, 17, 23, 0.12);
 }
+
 .step-dot.done,
 .step-dot.active {
   background: var(--accent);
 }
+
 .step-dot.active {
-  width: 18px;
-  border-radius: 3px;
+  box-shadow: 0 0 0 6px rgba(0, 122, 255, 0.12);
 }
+
 .step-line {
-  flex: 1;
+  width: 32px;
   height: 1px;
-  background: var(--border);
+  background: rgba(13, 17, 23, 0.12);
 }
+
 .step-line.done {
-  background: rgba(0, 122, 255, 0.3);
+  background: var(--accent);
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.option-card {
+  padding: 20px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(13, 17, 23, 0.06);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+  transition:
+    transform 0.14s ease,
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
+}
+
+.option-card:hover,
+.option-card.selected {
+  transform: translateY(-2px);
+  border-color: rgba(0, 122, 255, 0.22);
+  box-shadow: 0 26px 60px rgba(0, 122, 255, 0.1);
+}
+
+.option-card.muted.selected {
+  border-color: rgba(13, 17, 23, 0.14);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+}
+
+.option-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.option-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 122, 255, 0.08);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.option-badge.neutral {
+  background: rgba(13, 17, 23, 0.06);
+  color: var(--text-2);
+}
+
+.option-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(13, 17, 23, 0.18);
+  background: white;
+  box-shadow: inset 0 0 0 4px white;
+}
+
+.option-card.selected .option-radio {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.option-body {
+  display: flex;
+  gap: 14px;
+}
+
+.option-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--text-2);
+  background: rgba(13, 17, 23, 0.05);
+}
+
+.github-icon {
+  color: var(--accent);
+  background: rgba(0, 122, 255, 0.08);
 }
 
 h2 {
   font-size: 20px;
-  font-weight: 600;
-  color: var(--text-1);
-  letter-spacing: -0.4px;
-  margin-bottom: 6px;
-}
-.subtitle {
-  font-size: 13.5px;
-  color: var(--text-2);
-  line-height: 1.5;
-  margin-bottom: 28px;
+  line-height: 1.15;
+  margin-bottom: 8px;
 }
 
-/* Options */
-.options {
+.option-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+.github-form {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(13, 17, 23, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-.option-card {
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 20px;
-  cursor: pointer;
-  transition: all 0.15s;
-  position: relative;
-}
-.option-card:hover {
-  border-color: #c0d8f5;
-  background: #fafcff;
-}
-.option-card.selected {
-  border-color: var(--accent);
-  background: var(--accent-bg);
-}
-.option-radio {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 16px;
-  height: 16px;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-}
-.option-card.selected .option-radio {
-  border-color: var(--accent);
-  background: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.option-card.selected .option-radio::after {
-  content: '';
-  width: 6px;
-  height: 6px;
-  background: white;
-  border-radius: 50%;
-}
-.option-head {
-  display: flex;
-  align-items: flex-start;
   gap: 14px;
 }
-.option-icon {
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  flex-shrink: 0;
-}
-.option-card.selected .option-icon {
-  border-color: #c0d8f5;
-  background: #dff0ff;
-}
-.option-label {
-  font-size: 14px;
+
+.field-label {
+  display: block;
+  font-size: 12px;
   font-weight: 600;
+  margin-bottom: 7px;
   color: var(--text-1);
 }
-.option-desc {
-  font-size: 12.5px;
-  color: var(--text-2);
-  margin-top: 3px;
-  line-height: 1.5;
-}
 
-/* GitHub form */
-.github-form {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #d0e8ff;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.field-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-2);
-  margin-bottom: 6px;
-  display: block;
-}
 .field-input {
   width: 100%;
-  padding: 9px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-xs);
+  padding: 10px 12px;
+  border: 1px solid rgba(13, 17, 23, 0.12);
+  border-radius: 12px;
   font-size: 13px;
   font-family: var(--font);
-  color: var(--text-1);
   background: white;
   outline: none;
-  transition: border-color 0.1s;
-}
-.field-input:focus {
-  border-color: var(--accent);
-}
-.field-input::placeholder {
-  color: var(--text-3);
-}
-.field-hint {
-  font-size: 11.5px;
-  color: var(--text-3);
-  margin-top: 5px;
-}
-.input-row {
-  display: flex;
-  gap: 8px;
-}
-.input-row .field-input {
-  flex: 1;
-}
-.connect-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-xs);
-  font-size: 13px;
-  font-family: var(--font);
-  background: white;
-  cursor: pointer;
-  white-space: nowrap;
-  color: var(--text-1);
-  transition: all 0.1s;
-}
-.connect-btn:hover {
-  background: var(--hover);
-  border-color: #c0d8f5;
+  transition: border-color 0.14s ease;
 }
 
-/* Buttons */
-.btn-row {
+.field-input:focus {
+  border-color: rgba(0, 122, 255, 0.3);
+}
+
+.field-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.input-row {
   display: flex;
   gap: 10px;
 }
-.btn-row .btn-ghost {
-  flex: 0 0 auto;
-  padding: 10px 18px;
-}
-.btn-row .btn-primary {
+
+.input-row .field-input {
   flex: 1;
-  padding: 10px 20px;
 }
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+
+.connect-btn,
+.topbar-chip,
+.toolbar-btn {
+  border: 1px solid rgba(13, 17, 23, 0.08);
+  background: white;
+  color: var(--text-1);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    transform 0.14s ease,
+    border-color 0.14s ease,
+    background 0.14s ease;
+}
+
+.connect-btn {
+  padding: 0 14px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.topbar-chip,
+.toolbar-btn {
+  padding: 8px 14px;
+  font-size: 12px;
+}
+
+.connect-btn:hover,
+.topbar-chip:hover,
+.toolbar-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(0, 122, 255, 0.22);
+  background: var(--accent-bg);
+}
+
+.actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toolbar-meta {
+  color: var(--text-2);
+}
+
+.toolbar-hint {
+  font-size: 12px;
+}
+
+@media (max-width: 960px) {
+  .hero-row,
+  .options-grid {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+}
+
+@media (max-width: 720px) {
+  .sync-screen {
+    padding: 16px;
+  }
+
+  .option-card {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
 }
 </style>
