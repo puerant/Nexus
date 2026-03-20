@@ -1,7 +1,7 @@
-<template>
+﻿<template>
   <PlaceholderView
     title="原型设计"
-    description="AI 读取需求文档，自动生成可交互的 HTML 原型页面，支持迭代修改和手动版本存档。"
+    description="AI 读取需求文档，自动生成可交互的原型页面，支持迭代修改和版本沉淀。"
     prerequisite="需求分析已完成"
   >
     <template #icon>
@@ -15,5 +15,5 @@
   </PlaceholderView>
 </template>
 <script setup lang="ts">
-import PlaceholderView from '@/components/PlaceholderView.vue'
+import PlaceholderView from '@/components/Layout/components/PlaceholderView.vue'
 </script>

@@ -1,7 +1,7 @@
-<template>
+﻿<template>
   <PlaceholderView
     title="复盘总结"
-    description="项目完成后自动聚合数据，AI 生成复盘报告，经验沉淀到四个复用库（提示词/测试用例/任务模板/AI上下文）。"
+    description="项目完成后自动聚合过程数据，由 AI 生成复盘报告并沉淀可复用经验。"
     prerequisite="任务开发已完成"
   >
     <template #icon>
@@ -13,5 +13,5 @@
   </PlaceholderView>
 </template>
 <script setup lang="ts">
-import PlaceholderView from '@/components/PlaceholderView.vue'
+import PlaceholderView from '@/components/Layout/components/PlaceholderView.vue'
 </script>

@@ -1,7 +1,7 @@
-<template>
+﻿<template>
   <PlaceholderView
     title="需求分析"
-    description="通过 AI 对话将模糊需求转化为结构化文档，支持多轮追问和思维导图可视化。"
+    description="通过 AI 对话将模糊需求转化为结构化文档，支持多轮追问和需求梳理。"
   >
     <template #icon>
       <svg width="48" height="48" viewBox="0 0 48 48" fill="none" opacity="0.35">
@@ -13,5 +13,5 @@
   </PlaceholderView>
 </template>
 <script setup lang="ts">
-import PlaceholderView from '@/components/PlaceholderView.vue'
+import PlaceholderView from '@/components/Layout/components/PlaceholderView.vue'
 </script>

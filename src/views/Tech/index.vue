@@ -1,7 +1,7 @@
-<template>
+﻿<template>
   <PlaceholderView
     title="技术选型"
-    description="AI 分析需求特征，结合技术栈偏好，输出包含推荐方案、备选方案、理由和风险的决策文档。"
+    description="AI 结合需求特征和技术偏好，给出推荐方案、备选方案、理由和风险评估。"
     prerequisite="需求文档已锁定"
   >
     <template #icon>
@@ -13,5 +13,5 @@
   </PlaceholderView>
 </template>
 <script setup lang="ts">
-import PlaceholderView from '@/components/PlaceholderView.vue'
+import PlaceholderView from '@/components/Layout/components/PlaceholderView.vue'
 </script>

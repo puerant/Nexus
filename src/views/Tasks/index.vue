@@ -1,7 +1,7 @@
-<template>
+﻿<template>
   <PlaceholderView
     title="任务开发"
-    description="AI 将需求拆解为里程碑 → 模块 → 任务三层结构，并可触发 AI 自动执行，流式输出代码生成过程。"
+    description="AI 将需求拆解为里程碑、模块和任务层级结构，并支持生成执行方案与代码输出。"
     prerequisite="技术选型文档已生成"
   >
     <template #icon>
@@ -14,5 +14,5 @@
   </PlaceholderView>
 </template>
 <script setup lang="ts">
-import PlaceholderView from '@/components/PlaceholderView.vue'
+import PlaceholderView from '@/components/Layout/components/PlaceholderView.vue'
 </script>

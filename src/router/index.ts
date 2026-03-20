@@ -1,5 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import WorkspaceView from '@/views/WorkspaceView.vue'
+﻿import { createRouter, createWebHistory } from 'vue-router'
+import WorkspaceView from '@/views/Workspace/index.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -12,49 +12,49 @@ const router = createRouter({
     {
       path: '/sync',
       name: 'sync',
-      component: () => import('@/views/SyncView.vue'),
+      component: () => import('@/views/Sync/index.vue'),
     },
     {
       path: '/project/:id',
       name: 'project',
-      component: () => import('@/views/ProjectView.vue'),
+      component: () => import('@/components/Layout/index.vue'),
       children: [
         {
           path: '',
           name: 'project-overview',
-          component: () => import('@/views/project/OverviewView.vue'),
+          component: () => import('@/views/Overview/index.vue'),
         },
         {
           path: 'requirements',
           name: 'requirements',
-          component: () => import('@/views/project/RequirementsView.vue'),
+          component: () => import('@/views/Requirements/index.vue'),
         },
         {
           path: 'prototype',
           name: 'prototype',
-          component: () => import('@/views/project/PrototypeView.vue'),
+          component: () => import('@/views/Prototype/index.vue'),
         },
         {
           path: 'tech',
           name: 'tech',
-          component: () => import('@/views/project/TechView.vue'),
+          component: () => import('@/views/Tech/index.vue'),
         },
         {
           path: 'tasks',
           name: 'tasks',
-          component: () => import('@/views/project/TasksView.vue'),
+          component: () => import('@/views/Tasks/index.vue'),
         },
         {
           path: 'retrospective',
           name: 'retrospective',
-          component: () => import('@/views/project/RetrospectiveView.vue'),
+          component: () => import('@/views/Retrospective/index.vue'),
         },
       ],
     },
     {
       path: '/settings',
       name: 'settings',
-      component: () => import('@/views/SettingsView.vue'),
+      component: () => import('@/views/Settings/index.vue'),
     },
   ],
 })
