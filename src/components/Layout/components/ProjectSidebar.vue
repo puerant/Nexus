@@ -23,7 +23,7 @@
         :title="isCollapsed ? item.label : undefined"
         @click="$emit('select', item.phase)"
       >
-        <span class="nav-icon" v-html="item.icon" />
+        <UiIcon class="nav-icon" :icon="item.icon" />
         <span class="nav-label">{{ item.label }}</span>
       </RouterLink>
     </nav>
@@ -33,6 +33,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
+import UiIcon from '@/components/ui/UiIcon.vue'
 import UiStatusBadge from '@/components/ui/UiStatusBadge.vue'
 
 defineProps<{
@@ -172,17 +173,9 @@ function toggleCollapse() {
 }
 
 .nav-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 1.125rem;
   height: 1.125rem;
   flex-shrink: 0;
-}
-
-.nav-icon :deep(svg) {
-  width: 100%;
-  height: 100%;
 }
 
 .nav-label {
