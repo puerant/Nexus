@@ -187,9 +187,7 @@ function toggleCollapse() {
 }
 
 .collapsed .nav-label {
-  opacity: 0;
-  width: 0;
-  overflow: hidden;
+  display: none;
 }
 
 @media (max-width: 960px) {
