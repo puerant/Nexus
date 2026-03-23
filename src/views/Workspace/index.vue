@@ -36,12 +36,7 @@
 
             <div v-if="recentWorkspaces.length > 0" class="ws-list">
               <button v-for="ws in recentWorkspaces" :key="ws.path" class="ws-item" type="button" @click="selectWorkspace(ws)">
-                <UiIcon class="ws-icon">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M1.5 5H14.5V13.5H1.5V5Z" stroke="currentColor" stroke-width="1" />
-                    <path d="M1.5 5L3 3H7L8 5" stroke="currentColor" stroke-width="1" />
-                  </svg>
-                </UiIcon>
+                <UiIcon class="ws-icon" icon="lucide:folder" />
                 <div class="ws-info">
                   <div class="ws-name">{{ ws.name }}</div>
                   <div class="ws-path">{{ ws.path }}</div>
@@ -66,23 +61,14 @@
               @dragleave="isDragOver = false"
               @drop.prevent="handleDrop"
             >
-              <UiIcon class="drop-icon" size="lg">
-                <svg width="24" height="24" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-                  <path d="M11 4V18M4 11H18" stroke="currentColor" stroke-width="1.2" />
-                </svg>
-              </UiIcon>
+              <UiIcon class="drop-icon" icon="lucide:plus" size="lg" />
               <div class="drop-text">拖入文件夹，或者点击浏览</div>
               <div class="drop-hint">支持直接把本地项目文件夹拖拽到这里</div>
             </button>
 
             <UiButton variant="primary" size="lg" block :disabled="isLoading" @click="browseFolder">
               <template #icon>
-                <UiIcon>
-                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
-                    <path d="M1.5 4.5H13.5V12.5H1.5V4.5Z" stroke="white" stroke-width="1" />
-                    <path d="M1.5 4.5L3 2.5H6.5L7.5 4.5" stroke="white" stroke-width="1" />
-                  </svg>
-                </UiIcon>
+                <UiIcon icon="lucide:folder-open" />
               </template>
               {{ isLoading ? '打开中…' : '浏览文件夹' }}
             </UiButton>

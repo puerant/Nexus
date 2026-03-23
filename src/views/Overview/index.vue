@@ -1,34 +1,46 @@
-﻿<template>
+<template>
   <section class="overview-page">
-    <UiSurface tone="accent" class="overview-hero">
-      <UiPageIntro :title="project?.name || '未命名项目'" eyebrow="Project Overview" :description="currentPhaseName + ' · 围绕需求、原型、技术方案、任务拆解和复盘，持续推进当前项目工作流。'">
-        <template #meta>
-          <span class="meta-chip">创建于 {{ formatDate(project?.createdAt) }}</span>
-          <span class="meta-chip">工作区 {{ workspacePath }}</span>
-        </template>
-        <template #aside>
-          <div class="hero-actions">
-            <UiButton variant="secondary">同步状态</UiButton>
-            <UiButton variant="primary" :to="{ name: 'requirements', params: { id: projectId } }">开始需求分析</UiButton>
-          </div>
-        </template>
-      </UiPageIntro>
-    </UiSurface>
+    <div class="overview-header">
+      <div class="header-info">
+        <h1 class="header-title">{{ project?.name || '未命名项目' }}</h1>
+        <span class="header-meta">{{ currentPhaseName }} · 创建于 {{ formatDate(project?.createdAt) }}</span>
+      </div>
+      <div class="header-actions">
+        <UiButton variant="secondary" size="sm">同步状态</UiButton>
+        <UiButton variant="primary" size="sm" :to="{ name: 'requirements', params: { id: projectId } }">
+          开始需求分析
+        </UiButton>
+      </div>
+    </div>
 
     <section class="stats-grid">
-      <UiSurface tone="accent" class="stat-card">
+      <div class="stat-card">
         <div class="stat-label">阶段进度</div>
         <div class="stat-value">{{ completedPhases }}/5</div>
         <div class="stat-sub">已完成 {{ completedPhases }} 个阶段</div>
-        <div class="progress-track"><div class="progress-bar" :style="{ width: `${(completedPhases / 5) * 100}%` }" /></div>
-      </UiSurface>
-      <UiSurface class="stat-card"><div class="stat-label">默认模型</div><div class="stat-value small">{{ modelLabel }}</div><div class="stat-sub">当前项目默认配置</div></UiSurface>
-      <UiSurface class="stat-card"><div class="stat-label">Token 消耗</div><div class="stat-value">0K</div><div class="stat-sub">尚未开始执行</div></UiSurface>
-      <UiSurface class="stat-card"><div class="stat-label">提示词资产</div><div class="stat-value">0</div><div class="stat-sub">等待阶段内容沉淀</div></UiSurface>
+        <div class="progress-track">
+          <div class="progress-bar" :style="{ width: `${(completedPhases / 5) * 100}%` }" />
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">默认模型</div>
+        <div class="stat-value small">{{ modelLabel }}</div>
+        <div class="stat-sub">当前项目默认配置</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Token 消耗</div>
+        <div class="stat-value">0K</div>
+        <div class="stat-sub">尚未开始执行</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">提示词资产</div>
+        <div class="stat-value">0</div>
+        <div class="stat-sub">等待阶段内容沉淀</div>
+      </div>
     </section>
 
     <section class="content-grid">
-      <UiSurface>
+      <div class="panel">
         <div class="section-label">项目阶段</div>
         <div class="phase-list">
           <button v-for="phase in phaseList" :key="phase.id" class="phase-item" type="button" @click="goToPhase(phase.id)">
@@ -37,9 +49,9 @@
             <UiStatusBadge :tone="getPhaseTone(phase.id)">{{ getPhaseStatusLabel(phase.id) }}</UiStatusBadge>
           </button>
         </div>
-      </UiSurface>
+      </div>
 
-      <UiSurface>
+      <div class="panel">
         <div class="section-label">活跃热力图</div>
         <div class="heatmap-wrap">
           <div class="heatmap-grid">
@@ -54,10 +66,10 @@
             <span>少</span><i class="legend-box level-0" /><i class="legend-box level-1" /><i class="legend-box level-2" /><i class="legend-box level-3" /><i class="legend-box level-4" /><span>多</span>
           </div>
         </div>
-      </UiSurface>
+      </div>
     </section>
 
-    <UiSurface>
+    <div class="panel">
       <div class="section-label">最近动态</div>
       <div v-if="activities.length > 0" class="activity-list">
         <div v-for="(act, i) in activities" :key="i" class="activity-item">
@@ -66,8 +78,11 @@
           <span class="activity-time">{{ act.time }}</span>
         </div>
       </div>
-      <div v-else class="activity-empty"><strong>还没有项目动态</strong><p>开始需求分析后，这里会汇总最近的生成、编辑和阶段推进记录。</p></div>
-    </UiSurface>
+      <div v-else class="activity-empty">
+        <strong>还没有项目动态</strong>
+        <p>开始需求分析后，这里会汇总最近的生成、编辑和阶段推进记录。</p>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -75,25 +90,15 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiPageIntro from '@/components/ui/UiPageIntro.vue'
 import UiStatusBadge from '@/components/ui/UiStatusBadge.vue'
-import UiSurface from '@/components/ui/UiSurface.vue'
 import { useProjectStore } from '@/stores/project.ts'
-import { useWorkspaceStore } from '@/stores/workspace.ts'
 
 const route = useRoute()
 const router = useRouter()
 const projectStore = useProjectStore()
-const workspaceStore = useWorkspaceStore()
 
 const projectId = computed(() => route.params.id as string)
 const project = computed(() => projectStore.currentProject)
-const workspacePath = computed(() => {
-  const ws = workspaceStore.currentWorkspace
-  if (!ws) return '未选择工作区'
-  const parts = ws.path.split(/[/\\]/).filter(Boolean)
-  return parts.length > 2 ? `.../${parts.slice(-2).join('/')}` : ws.path
-})
 
 const phaseList = [
   { id: 'requirements', name: '需求分析', num: '01' },
@@ -157,43 +162,283 @@ function getHeatValue(_w: number, _d: number): number { return 0 }
 </script>
 
 <style scoped>
-.overview-page { display: flex; flex-direction: column; gap: 1.125rem; }
-.overview-hero { padding: 1.5rem; }
-.meta-chip {
-  display: inline-flex; align-items: center; padding: 0.5rem 0.8rem; border-radius: var(--radius-pill); background: color-mix(in oklab, var(--color-surface-soft) 78%, white 22%); border: 1px solid var(--color-border-soft); color: var(--color-text-secondary); font-size: 0.75rem;
+.overview-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
-.hero-actions { display: flex; flex-direction: column; gap: 0.6rem; min-width: 11rem; }
-.stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
-.stat-card { min-height: 9.8rem; }
-.stat-label, .section-label { margin-bottom: 0.65rem; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-tertiary); }
-.stat-value { font-size: 2.1rem; font-weight: 700; letter-spacing: -0.05em; line-height: 1; }
-.stat-value.small { font-size: 1.2rem; line-height: 1.2; }
-.stat-sub { margin-top: 0.5rem; font-size: 0.75rem; color: var(--color-text-secondary); }
-.progress-track { margin-top: 1rem; height: 0.38rem; border-radius: var(--radius-pill); background: var(--color-border-soft); overflow: hidden; }
-.progress-bar { height: 100%; background: linear-gradient(90deg, var(--color-accent), color-mix(in oklab, var(--color-accent) 55%, white 45%)); }
-.content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.phase-list { display: flex; flex-direction: column; gap: 0.75rem; }
-.phase-item { width: 100%; display: flex; align-items: center; gap: 0.8rem; padding: 0.9rem; border: 1px solid var(--color-border-soft); border-radius: var(--radius-lg); background: var(--color-surface-raised); cursor: pointer; }
-.phase-index { width: 1.8rem; color: var(--color-text-tertiary); font-size: 0.75rem; font-weight: 700; }
-.phase-name { flex: 1; text-align: left; font-weight: 700; }
-.heatmap-wrap { overflow: auto; }
-.heatmap-grid { display: flex; gap: 0.25rem; }
-.heatmap-column { display: flex; flex-direction: column; gap: 0.25rem; }
-.heatmap-cell, .legend-box { width: 0.75rem; height: 0.75rem; border-radius: 0.2rem; background: #eef2f6; }
-.heatmap-cell[data-v='1'], .legend-box.level-1 { background: #d0e8ff; }
-.heatmap-cell[data-v='2'], .legend-box.level-2 { background: #90c4ff; }
-.heatmap-cell[data-v='3'], .legend-box.level-3 { background: #4da3ff; }
-.heatmap-cell[data-v='4'], .legend-box.level-4 { background: #007aff; }
-.legend-row { margin-top: 0.9rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; font-size: 0.75rem; color: var(--color-text-secondary); }
-.legend-scale { display: flex; align-items: center; gap: 0.35rem; }
-.activity-list { display: flex; flex-direction: column; gap: 0.75rem; }
-.activity-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.9rem; border-radius: var(--radius-lg); background: var(--color-surface-soft); }
-.activity-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--color-text-tertiary); }
-.activity-dot.important { background: var(--color-accent); }
-.activity-text { flex: 1; color: var(--color-text-primary); }
-.activity-time { font-size: 0.75rem; color: var(--color-text-tertiary); }
-.activity-empty { min-height: 8.75rem; display: grid; place-items: center; text-align: center; color: var(--color-text-secondary); }
-.activity-empty p { margin-top: 0.45rem; max-width: 26rem; line-height: 1.6; }
-@media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .content-grid { grid-template-columns: 1fr; } }
-@media (max-width: 720px) { .stats-grid { grid-template-columns: 1fr; } .legend-row { flex-direction: column; align-items: flex-start; } }
+
+.overview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.header-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.header-meta {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.stat-card {
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-soft);
+}
+
+.stat-label,
+.section-label {
+  margin-bottom: 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--color-text-primary);
+}
+
+.stat-value.small {
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.stat-sub {
+  margin-top: 0.375rem;
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+}
+
+.progress-track {
+  margin-top: 0.75rem;
+  height: 0.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-soft);
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--color-accent);
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.panel {
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-soft);
+}
+
+.phase-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.phase-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.phase-item:hover {
+  background: var(--color-surface-soft);
+  border-color: var(--color-border);
+}
+
+.phase-index {
+  width: 1.5rem;
+  color: var(--color-text-tertiary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.phase-name {
+  flex: 1;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.heatmap-wrap {
+  overflow: auto;
+}
+
+.heatmap-grid {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.heatmap-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.heatmap-cell,
+.legend-box {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 0.15rem;
+  background: var(--color-surface-soft);
+}
+
+.heatmap-cell[data-v='1'],
+.legend-box.level-1 {
+  background: #d0e8ff;
+}
+
+.heatmap-cell[data-v='2'],
+.legend-box.level-2 {
+  background: #90c4ff;
+}
+
+.heatmap-cell[data-v='3'],
+.legend-box.level-3 {
+  background: #4da3ff;
+}
+
+.heatmap-cell[data-v='4'],
+.legend-box.level-4 {
+  background: var(--color-accent);
+}
+
+.legend-row {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+}
+
+.legend-scale {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+}
+
+.activity-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--color-text-tertiary);
+}
+
+.activity-dot.important {
+  background: var(--color-accent);
+}
+
+.activity-text {
+  flex: 1;
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+}
+
+.activity-time {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+}
+
+.activity-empty {
+  min-height: 6rem;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.activity-empty p {
+  margin-top: 0.375rem;
+  max-width: 22rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 1100px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .overview-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .legend-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
 </style>
