@@ -1,18 +1,5 @@
 <template>
   <aside class="project-sidebar" :class="{ collapsed: isCollapsed }">
-    <button class="collapse-toggle" type="button" @click="toggleCollapse" :title="isCollapsed ? '展开侧边栏' : '收起侧边栏'">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2">
-        <path v-if="isCollapsed" d="M6 4L10 8L6 12" />
-        <path v-else d="M10 4L6 8L10 12" />
-      </svg>
-    </button>
-
-    <div class="sidebar-summary" :class="{ hidden: isCollapsed }">
-      <div class="sidebar-label">当前项目</div>
-      <div class="sidebar-title">{{ title }}</div>
-      <UiStatusBadge tone="info">{{ phaseLabel }}</UiStatusBadge>
-    </div>
-
     <nav class="sidebar-nav">
       <RouterLink
         v-for="item in items"
@@ -27,6 +14,10 @@
         <span class="nav-label">{{ item.label }}</span>
       </RouterLink>
     </nav>
+
+    <button class="collapse-toggle" type="button" @click="toggleCollapse" :title="isCollapsed ? '展开侧边栏' : '收起侧边栏'">
+      <UiIcon :icon="isCollapsed ? 'lucide:chevrons-right' : 'lucide:chevrons-left'" />
+    </button>
   </aside>
 </template>
 
@@ -34,11 +25,8 @@
 import { ref } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import UiIcon from '@/components/ui/UiIcon.vue'
-import UiStatusBadge from '@/components/ui/UiStatusBadge.vue'
 
 defineProps<{
-  title: string
-  phaseLabel: string
   activePhase: string
   items: Array<{
     phase: string
@@ -63,8 +51,7 @@ function toggleCollapse() {
 .project-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem 0.6rem;
+  padding: 0.75rem 0.5rem;
   background: color-mix(in oklab, var(--color-surface-soft) 70%, white 30%);
   border-right: 1px solid var(--color-border-soft);
   width: 11.5rem;
@@ -73,84 +60,21 @@ function toggleCollapse() {
 
 .project-sidebar.collapsed {
   width: 3.25rem;
-  padding: 1rem 0.4rem;
-}
-
-.collapse-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  margin: 0 0 0.5rem auto;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.collapse-toggle:hover {
-  background: var(--color-surface-raised);
-  color: var(--color-text-primary);
-}
-
-.collapse-toggle svg {
-  width: 1rem;
-  height: 1rem;
-}
-
-.collapsed .collapse-toggle {
-  margin: 0 auto 0.5rem;
-}
-
-.sidebar-summary {
-  padding: 0.75rem;
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-raised);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  opacity: 1;
-  transition: opacity 0.15s;
-}
-
-.sidebar-summary.hidden {
-  opacity: 0;
-  pointer-events: none;
-  height: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
-.sidebar-label {
-  font-size: 0.625rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
-}
-
-.sidebar-title {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  line-height: 1.25;
-  color: var(--color-text-primary);
+  padding: 0.75rem 0.4rem;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  margin-top: 0.25rem;
+  flex: 1;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.65rem 0.6rem;
+  padding: 0.6rem;
   border-radius: var(--radius-md);
   text-decoration: none;
   color: var(--color-text-secondary);
@@ -169,7 +93,6 @@ function toggleCollapse() {
 
 .collapsed .nav-item {
   justify-content: center;
-  padding: 0.65rem;
 }
 
 .nav-icon {
@@ -182,12 +105,30 @@ function toggleCollapse() {
   font-size: 0.8125rem;
   font-weight: 500;
   white-space: nowrap;
-  opacity: 1;
-  transition: opacity 0.15s;
 }
 
 .collapsed .nav-label {
   display: none;
+}
+
+.collapse-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 2rem;
+  margin-top: 0.5rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.collapse-toggle:hover {
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
 }
 
 @media (max-width: 960px) {
@@ -196,26 +137,12 @@ function toggleCollapse() {
     border-bottom: 1px solid var(--color-border-soft);
     width: 100%;
     flex-direction: row;
-    flex-wrap: wrap;
-    padding: 0.75rem;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
   }
 
   .project-sidebar.collapsed {
     width: 100%;
-  }
-
-  .collapse-toggle {
-    order: -1;
-  }
-
-  .sidebar-summary {
-    flex-direction: row;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .sidebar-summary.hidden {
-    display: none;
   }
 
   .sidebar-nav {
@@ -233,8 +160,14 @@ function toggleCollapse() {
   }
 
   .collapsed .nav-label {
-    opacity: 1;
+    display: inline;
+  }
+
+  .collapse-toggle {
     width: auto;
+    margin-top: 0;
+    margin-left: auto;
+    padding: 0 0.5rem;
   }
 }
 </style>

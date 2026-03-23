@@ -7,8 +7,6 @@
 
     <div class="project-shell">
       <ProjectSidebar
-        :title="projectStore.currentProject?.name || '未命名项目'"
-        :phase-label="currentPhaseLabel"
         :active-phase="activePhase"
         :items="navItems"
         @select="projectStore.setActivePhase"
@@ -52,13 +50,6 @@ const navItems = computed(() => [
   { phase: 'tasks', routeName: 'tasks', label: '任务看板', icon: 'lucide:kanban', to: { name: 'tasks', params: { id: projectId.value } } },
   { phase: 'retrospective', routeName: 'retrospective', label: '复盘总结', icon: 'lucide:line-chart', to: { name: 'retrospective', params: { id: projectId.value } } },
 ])
-
-const currentPhaseLabel = computed(() => {
-  const labels: Record<string, string> = {
-    overview: '概览', requirements: '需求分析', prototype: '原型设计', tech: '技术选型', tasks: '任务看板', retrospective: '复盘总结',
-  }
-  return labels[activePhase.value] ?? '进行中'
-})
 
 const projectTitle = computed(() => projectStore.currentProject?.name || 'AI Workflow')
 const workspaceSubtitle = computed(() => workspaceStore.currentWorkspace?.path || '当前未选择工作区')
