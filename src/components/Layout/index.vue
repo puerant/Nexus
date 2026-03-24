@@ -77,9 +77,10 @@ async function openWorkspaceFolder() {
 
 <style scoped>
 .project-shell {
-  min-height: 100%;
+  height: 100%;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
+  overflow: hidden;
 }
 
 .project-main {

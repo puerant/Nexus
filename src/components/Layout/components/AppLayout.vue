@@ -236,7 +236,7 @@ onBeforeUnmount(async () => {
 
 .app-content {
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .app-toolbar {
