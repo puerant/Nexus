@@ -27,6 +27,8 @@
           :data="heatmapData"
           :weeks="24"
           :show-legend="true"
+          stretch
+          cell-size="md"
           empty-text="最近 24 周暂未产生操作记录"
         />
       </UiSurface>
@@ -217,7 +219,7 @@ function formatDate(iso?: string): string {
 
 .content-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 0.7fr 1.3fr;
   gap: 0.75rem;
 }
 
