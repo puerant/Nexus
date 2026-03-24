@@ -15,24 +15,36 @@
 
     <StatsGrid :stats="statsItems" />
 
-    <section class="content-grid">
-      <UiSurface padding="md" rounded="lg">
-        <div class="section-label">项目阶段</div>
-        <PhaseList :phases="phaseItems" @select="goToPhase" />
-      </UiSurface>
+<!--    <section class="content-grid">-->
+<!--      <UiSurface padding="md" rounded="lg">-->
+<!--        <div class="section-label">项目阶段</div>-->
+<!--        <PhaseList :phases="phaseItems" @select="goToPhase" />-->
+<!--      </UiSurface>-->
 
-      <UiSurface padding="md" rounded="lg">
-        <div class="section-label">活跃热力图</div>
-        <UiHeatmap
+<!--      <UiSurface padding="md" rounded="lg">-->
+<!--        <div class="section-label">活跃热力图</div>-->
+<!--        <UiHeatmap-->
+<!--          :data="heatmapData"-->
+<!--          :weeks="24"-->
+<!--          :show-legend="true"-->
+<!--          stretch-->
+<!--          cell-size="md"-->
+<!--          empty-text="最近 24 周暂未产生操作记录"-->
+<!--        />-->
+<!--      </UiSurface>-->
+<!--    </section>-->
+
+    <UiSurface padding="md" rounded="lg">
+      <div class="section-label">活跃热力图</div>
+      <UiHeatmap
           :data="heatmapData"
           :weeks="24"
           :show-legend="true"
           stretch
           cell-size="md"
           empty-text="最近 24 周暂未产生操作记录"
-        />
-      </UiSurface>
-    </section>
+      />
+    </UiSurface>
 
     <UiSurface padding="md" rounded="lg">
       <div class="section-label">最近动态</div>
