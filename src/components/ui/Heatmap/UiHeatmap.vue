@@ -13,7 +13,7 @@
     </div>
 
     <div v-if="showLegend" class="ui-heatmap__legend">
-      <span class="ui-heatmap__legend-label">{{ emptyText }}</span>
+      <span class="ui-heatmap__legend-label">{{ hasData ? '' : emptyText }}</span>
       <div class="ui-heatmap__legend-scale">
         <span>少</span>
         <i
@@ -86,6 +86,8 @@ const gridData = computed(() => {
   }
   return grid
 })
+
+const hasData = computed(() => props.data.length > 0)
 
 function getCellClass(level: number): string {
   return `ui-heatmap__cell--level-${Math.min(level, props.levels - 1)}`
