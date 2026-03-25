@@ -59,43 +59,25 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiSurface from '@/components/ui/UiSurface.vue'
 import { UiHeatmap, generateDemoData } from '@/components/ui/Heatmap'
 import StatsGrid from './components/StatsGrid.vue'
-import PhaseList from './components/PhaseList.vue'
 import ActivityList from './components/ActivityList.vue'
 import { useProjectStore } from '@/stores/project.ts'
-import type { PhaseItem } from './components/PhaseList.vue'
 import type { StatItem } from './components/StatsGrid.vue'
 import type { ActivityItem } from './components/ActivityList.vue'
 import type { HeatmapData } from '@/components/ui/Heatmap'
 
 const route = useRoute()
-const router = useRouter()
 const projectStore = useProjectStore()
 
 const projectId = computed(() => route.params.id as string)
 const project = computed(() => projectStore.currentProject)
 
-const phaseConfig = [
-  { id: 'requirements', name: '需求分析', num: '01' },
-  { id: 'prototype', name: '原型设计', num: '02' },
-  { id: 'tech', name: '技术选型', num: '03' },
-  { id: 'tasks', name: '任务开发', num: '04' },
-  { id: 'retrospective', name: '复盘总结', num: '05' },
-] as const
-
 const completedPhases = computed(() =>
   !project.value ? 0 : Object.values(project.value.phases).filter((phase) => phase.status === 'completed').length,
-)
-
-const phaseItems = computed<PhaseItem[]>(() =>
-  phaseConfig.map((phase) => ({
-    ...phase,
-    status: (project.value?.phases as Record<string, { status: PhaseItem['status'] }>)?.[phase.id]?.status ?? 'not_started',
-  })),
 )
 
 const statsItems = computed<StatItem[]>(() => [
@@ -159,21 +141,6 @@ const activities = ref<ActivityItem[]>([
 ])
 
 const heatmapData = ref<HeatmapData[]>(generateDemoData(24, 0.35))
-
-function goToPhase(phaseId: string) {
-  const routeMap: Record<string, string> = {
-    requirements: 'requirements',
-    prototype: 'prototype',
-    tech: 'tech',
-    tasks: 'tasks',
-    retrospective: 'retrospective',
-  }
-  const routeName = routeMap[phaseId]
-  if (routeName) {
-    projectStore.setActivePhase(phaseId)
-    void router.push({ name: routeName, params: { id: projectId.value } })
-  }
-}
 
 function formatDate(iso?: string): string {
   if (!iso) return '未知'

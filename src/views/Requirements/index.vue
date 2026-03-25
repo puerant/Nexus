@@ -1,5 +1,6 @@
 <template>
   <section class="requirements-page">
+    <!-- 简洁工具栏 -->
     <div class="requirements-toolbar">
       <div class="toolbar-left">
         <UiStatusBadge :tone="isLocked ? 'success' : 'warning'">
@@ -9,7 +10,7 @@
       </div>
       <div class="toolbar-actions">
         <UiButton variant="secondary" size="sm" :disabled="isLocked || isSaving" @click="saveDraft">
-          {{ isSaving ? '保存中...' : '保存草稿' }}
+          {{ isSaving ? '保存中...' : '保存' }}
         </UiButton>
         <UiButton
           variant="primary"
@@ -25,44 +26,125 @@
       </div>
     </div>
 
-    <div class="requirements-grid">
-      <RequirementsEditorPane
+    <!-- 主编辑区 -->
+    <div class="editor-main">
+      <UiMarkdownEditor
         v-model="editorContent"
-        :locked="isLocked"
-        :prd-path="prdPath"
-        @insert-snippet="insertSnippet"
-      />
-
-      <RequirementsAssistantPane
-        mode="askuserquestion"
-        :mode-label="modeLabel"
-        :draft="draftMessage"
-        :drawer-open="drawerOpen"
-        :generating="isGeneratingPrd"
-        :locked="isLocked"
-        :total-questions="questionFlow.length"
-        :collected-count="completedAnswers"
-        :coverage="coverageItems"
-        :messages="messages"
-        :quick-prompts="quickPrompts"
-        @update:draft="draftMessage = $event"
-        @toggle-drawer="drawerOpen = !drawerOpen"
-        @generate-prd="generatePrd"
-        @send="sendMessage"
-        @use-prompt="applyPrompt"
+        :readonly="isLocked"
+        :placeholder="editorPlaceholder"
+        height="100%"
       />
     </div>
+
+    <!-- AI 助手浮动按钮 -->
+    <button
+      class="ai-fab"
+      :class="{ active: drawerOpen }"
+      type="button"
+      :disabled="isLocked"
+      @click="drawerOpen = !drawerOpen"
+    >
+      <UiIcon :icon="drawerOpen ? 'lucide:x' : 'lucide:message-circle'" size="md" />
+      <span v-if="!drawerOpen && completedAnswers < questionFlow.length" class="fab-badge">
+        {{ questionFlow.length - completedAnswers }}
+      </span>
+    </button>
+
+    <!-- 右侧抽屉 -->
+    <Transition name="drawer">
+      <aside v-if="drawerOpen" class="ai-drawer">
+        <header class="drawer-header">
+          <div class="drawer-title">
+            <UiIcon icon="lucide:sparkles" size="sm" />
+            <span>AI 需求助手</span>
+          </div>
+          <button class="drawer-close" type="button" @click="drawerOpen = false">
+            <UiIcon icon="lucide:x" size="sm" />
+          </button>
+        </header>
+
+        <!-- 进度指示 -->
+        <div class="drawer-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" :style="{ width: `${(completedAnswers / questionFlow.length) * 100}%` }" />
+          </div>
+          <span class="progress-text">{{ completedAnswers }}/{{ questionFlow.length }} 已完成</span>
+        </div>
+
+        <!-- 对话区域 -->
+        <div class="drawer-messages" ref="messagesRef">
+          <article
+            v-for="message in messages"
+            :key="message.id"
+            class="message"
+            :class="message.role"
+          >
+            <div class="message-avatar">
+              <UiIcon :icon="message.role === 'assistant' ? 'lucide:bot' : 'lucide:user'" size="sm" />
+            </div>
+            <div class="message-content">{{ message.content }}</div>
+          </article>
+        </div>
+
+        <!-- 快捷提示 -->
+        <div v-if="!isLocked" class="drawer-quick">
+          <button
+            v-for="prompt in quickPrompts.slice(0, 2)"
+            :key="prompt"
+            class="quick-btn"
+            type="button"
+            @click="applyPrompt(prompt)"
+          >
+            {{ prompt }}
+          </button>
+        </div>
+
+        <!-- 输入区 -->
+        <div class="drawer-input">
+          <textarea
+            v-model="draftMessage"
+            class="input-area"
+            rows="2"
+            :readonly="isLocked"
+            placeholder="回复 AI 的问题..."
+            @keydown.enter.exact.prevent="sendMessage"
+          />
+          <div class="input-actions">
+            <UiButton
+              variant="ghost"
+              size="sm"
+              :disabled="isLocked || isGeneratingPrd"
+              @click="generatePrd"
+            >
+              生成 PRD
+            </UiButton>
+            <UiButton
+              variant="primary"
+              size="sm"
+              :disabled="isLocked || !draftMessage.trim()"
+              @click="sendMessage"
+            >
+              发送
+            </UiButton>
+          </div>
+        </div>
+      </aside>
+    </Transition>
+
+    <!-- 遮罩层 -->
+    <Transition name="fade">
+      <div v-if="drawerOpen" class="drawer-overlay" @click="drawerOpen = false" />
+    </Transition>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiIcon from '@/components/ui/UiIcon.vue'
 import UiStatusBadge from '@/components/ui/UiStatusBadge.vue'
-import RequirementsAssistantPane from '@/views/Requirements/components/RequirementsAssistantPane.vue'
-import RequirementsEditorPane from '@/views/Requirements/components/RequirementsEditorPane.vue'
+import UiMarkdownEditor from '@/components/ui/UiMarkdownEditor.vue'
 import { readFile, readProjectConfig, writeFile, writeProjectConfig } from '@/api/workspace'
 import { useProjectStore, type ProjectConfig } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -85,15 +167,27 @@ const projectStore = useProjectStore()
 const workspaceStore = useWorkspaceStore()
 
 const prdPath = '.ai-workflow/requirements/PRD.md'
-const modeLabel = 'askUserQuestion'
-const drawerOpen = ref(true)
+const editorPlaceholder = `# PRD
+
+在这里整理需求文档...
+
+## 项目背景
+
+## 目标用户
+
+## 核心功能
+
+## 验收标准
+`
+
+const drawerOpen = ref(false)
 const draftMessage = ref('')
 const editorContent = ref('')
 const messages = ref<ChatMessage[]>([])
+const messagesRef = ref<HTMLElement | null>(null)
 const isGeneratingPrd = ref(false)
 const isSaving = ref(false)
 const isLocking = ref(false)
-const lockedAt = ref('')
 const isLocked = ref(false)
 let messageId = 0
 
@@ -108,65 +202,23 @@ const requirementForm = reactive({
 })
 
 const questionFlow: QuestionItem[] = [
-  {
-    key: 'background',
-    label: '业务背景',
-    question:
-      '请先介绍一下这个需求或产品为什么要做，目前遇到了什么问题，希望带来什么变化？',
-  },
-  {
-    key: 'goals',
-    label: '核心目标',
-    question:
-      '这个阶段最想达成的结果是什么？有哪些关键指标、业务价值或用户收益需要被验证？',
-  },
-  {
-    key: 'users',
-    label: '目标用户',
-    question:
-      '这个产品或功能主要给谁使用？他们的角色、使用频率、核心痛点分别是什么？',
-  },
-  {
-    key: 'scenarios',
-    label: '核心场景',
-    question:
-      '请列出 1 到 3 个最重要的使用场景，说明用户会在什么情况下使用它，以及希望完成什么任务？',
-  },
-  {
-    key: 'features',
-    label: '功能范围',
-    question:
-      '请整理这次交付需要覆盖的核心功能，哪些必须优先上线，哪些可以延后处理？',
-  },
-  {
-    key: 'constraints',
-    label: '约束条件',
-    question:
-      '是否存在时间、预算、技术依赖、设备环境或资源方面的限制，需要在需求阶段提前说明？',
-  },
-  {
-    key: 'acceptance',
-    label: '验收标准',
-    question:
-      '你会如何判断这个需求已经满足预期？请列出可验证、可检查的验收标准。',
-  },
+  { key: 'background', label: '业务背景', question: '请介绍一下这个需求的背景，目前遇到了什么问题？' },
+  { key: 'goals', label: '核心目标', question: '这个阶段最想达成的结果是什么？' },
+  { key: 'users', label: '目标用户', question: '这个产品主要给谁使用？他们的核心痛点是什么？' },
+  { key: 'scenarios', label: '核心场景', question: '请列出最重要的使用场景。' },
+  { key: 'features', label: '功能范围', question: '这次交付需要覆盖哪些核心功能？' },
+  { key: 'constraints', label: '约束条件', question: '是否有时间、技术或资源方面的限制？' },
+  { key: 'acceptance', label: '验收标准', question: '如何判断需求已满足预期？' },
 ]
 
 const quickPrompts = [
-  '帮我梳理这个需求要解决的核心业务问题',
-  '给我一份适合继续追问的用户场景清单',
-  '有哪些容易遗漏但需要提前确认的限制条件',
+  '帮我梳理核心业务问题',
+  '列出需要确认的限制条件',
+  '生成 PRD.md',
 ]
 
 const completedAnswers = computed(
   () => questionFlow.filter((item) => requirementForm[item.key].trim().length > 0).length,
-)
-
-const coverageItems = computed(() =>
-  questionFlow.map((item) => ({
-    label: item.label,
-    done: requirementForm[item.key].trim().length > 0,
-  })),
 )
 
 const canLock = computed(() => editorContent.value.trim().length > 0)
@@ -178,9 +230,7 @@ onMounted(async () => {
 
 function bootstrapMessages() {
   if (messages.value.length > 0) return
-  pushAssistant(
-    '已进入需求分析终端。默认模式为 askUserQuestion，我会逐轮追问并帮助你整理 PRD。',
-  )
+  pushAssistant('你好！我会帮你整理需求文档。')
   pushAssistant(questionFlow[0].question)
 }
 
@@ -204,7 +254,6 @@ async function loadExistingState() {
     )?.requirements
     if (phase?.status === 'locked') {
       isLocked.value = true
-      lockedAt.value = phase.lockedAt ?? ''
     }
   } catch (error) {
     console.error('Failed to load requirements state:', error)
@@ -213,10 +262,20 @@ async function loadExistingState() {
 
 function pushAssistant(content: string) {
   messages.value.push({ id: ++messageId, role: 'assistant', content })
+  scrollToBottom()
 }
 
 function pushUser(content: string) {
   messages.value.push({ id: ++messageId, role: 'user', content })
+  scrollToBottom()
+}
+
+function scrollToBottom() {
+  nextTick(() => {
+    if (messagesRef.value) {
+      messagesRef.value.scrollTop = messagesRef.value.scrollHeight
+    }
+  })
 }
 
 function currentQuestion(): QuestionItem | undefined {
@@ -233,13 +292,13 @@ function sendMessage() {
 
   const next = currentQuestion()
   if (next) {
-    pushAssistant(`收到，我先把这部分归档到「${mappedLabel()}」。接下来请继续回答：${next.question}`)
+    const answered = questionFlow.filter((item) => requirementForm[item.key].trim())
+    const lastLabel = answered[answered.length - 1]?.label ?? '当前问题'
+    pushAssistant(`收到，已记录「${lastLabel}」。接下来：${next.question}`)
     return
   }
 
-  pushAssistant(
-    '关键信息已经整理得差不多了。你可以现在生成 PRD.md，也可以继续补充 Markdown 细节后再保存。',
-  )
+  pushAssistant('信息收集完成！你可以点击「生成 PRD」或直接在编辑器中完善内容。')
 }
 
 function captureAnswer(content: string) {
@@ -248,19 +307,9 @@ function captureAnswer(content: string) {
   requirementForm[next.key] = content
 }
 
-function mappedLabel(): string {
-  const answered = questionFlow.filter((item) => requirementForm[item.key].trim())
-  return answered.at(-1)?.label ?? '当前问题'
-}
-
 function applyPrompt(prompt: string) {
   if (isLocked.value) return
   draftMessage.value = prompt
-}
-
-function insertSnippet(snippet: string) {
-  if (isLocked.value) return
-  editorContent.value = `${editorContent.value.trimEnd()}${editorContent.value ? '\n\n' : ''}${snippet}`
 }
 
 function buildPrdMarkdown() {
@@ -295,10 +344,6 @@ function buildPrdMarkdown() {
     '',
     '## 7. 验收标准',
     checklistize(acceptanceItems),
-    '',
-    '## 8. 协作记录',
-    `- 当前模式：${modeLabel}`,
-    `- 最近更新时间：${formatDateTime(new Date().toISOString())}`,
   ].join('\n')
 }
 
@@ -310,8 +355,7 @@ function splitBullets(value: string) {
 }
 
 function bulletize(value: string) {
-  const items = splitBullets(value)
-  return bulletizeArray(items)
+  return bulletizeArray(splitBullets(value))
 }
 
 function bulletizeArray(items: string[]) {
@@ -365,13 +409,11 @@ async function saveDraft() {
 
   isSaving.value = true
   try {
-    const content = editorContent.value.trim() ? editorContent.value : buildPrdMarkdown()
-    editorContent.value = content
-    await writeFile(workspacePath, prdPath, content)
+    await writeFile(workspacePath, prdPath, editorContent.value)
     await persistProjectConfig('in_progress')
   } catch (error) {
     console.error('Failed to save PRD draft:', error)
-    alert(`保存草稿失败：${error}`)
+    alert(`保存失败：${error}`)
   } finally {
     isSaving.value = false
   }
@@ -384,7 +426,7 @@ async function generatePrd() {
   try {
     editorContent.value = buildPrdMarkdown()
     await saveDraft()
-    pushAssistant('PRD.md 已生成并写入工作区。你可以继续微调内容，确认无误后再锁定需求。')
+    pushAssistant('PRD.md 已生成！你可以在左侧编辑器中查看和修改。')
   } finally {
     isGeneratingPrd.value = false
   }
@@ -399,28 +441,15 @@ async function lockRequirements() {
   try {
     await writeFile(workspacePath, prdPath, editorContent.value)
     await persistProjectConfig('locked')
-    lockedAt.value = new Date().toISOString()
     isLocked.value = true
     projectStore.setActivePhase('prototype')
     await router.push({ name: 'prototype', params: { id: route.params.id as string } })
   } catch (error) {
     console.error('Failed to lock requirements:', error)
-    alert(`锁定需求失败：${error}`)
+    alert(`锁定失败：${error}`)
   } finally {
     isLocking.value = false
   }
-}
-
-function formatDateTime(value?: string) {
-  if (!value) return '暂未锁定'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  const year = date.getFullYear()
-  const month = `${date.getMonth() + 1}`.padStart(2, '0')
-  const day = `${date.getDate()}`.padStart(2, '0')
-  const hour = `${date.getHours()}`.padStart(2, '0')
-  const minute = `${date.getMinutes()}`.padStart(2, '0')
-  return `${year}-${month}-${day} ${hour}:${minute}`
 }
 </script>
 
@@ -428,16 +457,18 @@ function formatDateTime(value?: string) {
 .requirements-page {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
   height: 100%;
+  position: relative;
 }
 
+/* 工具栏 */
 .requirements-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.5rem 0.25rem;
+  padding: 0.5rem 0.75rem;
+  flex-shrink: 0;
 }
 
 .toolbar-left {
@@ -457,17 +488,287 @@ function formatDateTime(value?: string) {
   gap: 0.5rem;
 }
 
-.requirements-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(20rem, 0.8fr);
-  gap: 0.75rem;
+/* 主编辑区 */
+.editor-main {
   flex: 1;
   min-height: 0;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
 }
 
-@media (max-width: 1080px) {
-  .requirements-grid {
-    grid-template-columns: 1fr;
+/* AI 浮动按钮 */
+.ai-fab {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-accent);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px color-mix(in oklab, var(--color-accent) 40%, transparent);
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 100;
+}
+
+.ai-fab:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 6px 24px color-mix(in oklab, var(--color-accent) 50%, transparent);
+}
+
+.ai-fab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-fab.active {
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-lg);
+}
+
+.fab-badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 1rem;
+  background: #ef4444;
+  color: white;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.25rem;
+}
+
+/* 右侧抽屉 */
+.ai-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 24rem;
+  height: 100%;
+  background: var(--color-surface-raised);
+  border-left: 1px solid var(--color-border-soft);
+  display: flex;
+  flex-direction: column;
+  z-index: 200;
+  box-shadow: var(--shadow-xl);
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border-soft);
+  flex-shrink: 0;
+}
+
+.drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.drawer-close {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.drawer-close:hover {
+  background: var(--color-surface-soft);
+}
+
+/* 进度条 */
+.drawer-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--color-border-soft);
+  flex-shrink: 0;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 0.375rem;
+  border-radius: 1rem;
+  background: var(--color-surface-soft);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 1rem;
+  background: var(--color-accent);
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+/* 消息区域 */
+.drawer-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.message {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.message-avatar {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.message.assistant .message-avatar {
+  background: color-mix(in oklab, var(--color-accent) 15%, white);
+  color: var(--color-accent);
+}
+
+.message.user .message-avatar {
+  background: var(--color-surface-soft);
+  color: var(--color-text-secondary);
+}
+
+.message-content {
+  flex: 1;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  padding-top: 0.125rem;
+}
+
+/* 快捷提示 */
+.drawer-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--color-border-soft);
+  flex-shrink: 0;
+}
+
+.quick-btn {
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-surface-soft);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.quick-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* 输入区 */
+.drawer-input {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--color-border-soft);
+  flex-shrink: 0;
+}
+
+.input-area {
+  width: 100%;
+  min-height: 3.5rem;
+  resize: none;
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-soft);
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input-area:focus {
+  border-color: var(--color-accent);
+}
+
+.input-area::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.input-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+/* 遮罩层 */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in oklab, black 40%, transparent);
+  z-index: 150;
+}
+
+/* 动画 */
+.drawer-enter-active,
+.drawer-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.drawer-enter-from,
+.drawer-leave-to {
+  transform: translateX(100%);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 响应式 */
+@media (max-width: 640px) {
+  .ai-drawer {
+    width: 100%;
   }
 }
 </style>
