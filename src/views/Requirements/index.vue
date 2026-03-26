@@ -1,6 +1,6 @@
 <template>
   <section class="requirements-page">
-    <!-- 简洁工具栏 -->
+    <!-- 工具栏 -->
     <div class="requirements-toolbar">
       <div class="toolbar-left">
         <UiStatusBadge :tone="isLocked ? 'success' : 'warning'">
@@ -9,20 +9,37 @@
         <span class="toolbar-hint">{{ prdPath }}</span>
       </div>
       <div class="toolbar-actions">
-        <UiButton variant="secondary" size="sm" :disabled="isLocked || isSaving" @click="saveDraft">
-          {{ isSaving ? '保存中...' : '保存' }}
-        </UiButton>
-        <UiButton
-          variant="primary"
-          size="sm"
+        <button
+          type="button"
+          class="toolbar-btn"
+          :class="{ active: drawerOpen }"
+          :disabled="isLocked"
+          @click="drawerOpen = !drawerOpen"
+        >
+          <UiIcon icon="lucide:sparkles" size="sm" />
+          <span>AI 助手</span>
+          <span v-if="!isLocked && completedAnswers < questionFlow.length" class="btn-badge">
+            {{ questionFlow.length - completedAnswers }}
+          </span>
+        </button>
+        <button
+          type="button"
+          class="toolbar-btn"
+          :disabled="isLocked || isSaving"
+          @click="saveDraft"
+        >
+          <UiIcon :icon="isSaving ? 'lucide:loader-2' : 'lucide:save'" size="sm" :class="{ 'is-spinning': isSaving }" />
+          <span>{{ isSaving ? '保存中' : '保存' }}</span>
+        </button>
+        <button
+          type="button"
+          class="toolbar-btn toolbar-btn--primary"
           :disabled="isLocked || !canLock || isLocking"
           @click="lockRequirements"
         >
-          <template #icon>
-            <UiIcon icon="lucide:lock" size="sm" />
-          </template>
-          {{ isLocking ? '锁定中...' : '锁定' }}
-        </UiButton>
+          <UiIcon :icon="isLocking ? 'lucide:loader-2' : 'lucide:lock'" size="sm" :class="{ 'is-spinning': isLocking }" />
+          <span>{{ isLocking ? '锁定中' : '锁定' }}</span>
+        </button>
       </div>
     </div>
 
@@ -35,20 +52,6 @@
         height="100%"
       />
     </div>
-
-    <!-- AI 助手浮动按钮 -->
-    <button
-      class="ai-fab"
-      :class="{ active: drawerOpen }"
-      type="button"
-      :disabled="isLocked"
-      @click="drawerOpen = !drawerOpen"
-    >
-      <UiIcon :icon="drawerOpen ? 'lucide:x' : 'lucide:message-circle'" size="md" />
-      <span v-if="!drawerOpen && completedAnswers < questionFlow.length" class="fab-badge">
-        {{ questionFlow.length - completedAnswers }}
-      </span>
-    </button>
 
     <!-- 右侧抽屉 -->
     <Transition name="drawer">
@@ -467,8 +470,10 @@ async function lockRequirements() {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 1rem;
   flex-shrink: 0;
+  border-bottom: 1px solid var(--color-border-soft);
+  background: var(--color-surface);
 }
 
 .toolbar-left {
@@ -485,68 +490,106 @@ async function lockRequirements() {
 .toolbar-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
+}
+
+/* 统一工具栏按钮样式 */
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.toolbar-btn:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: color-mix(in oklab, var(--color-accent) 6%, var(--color-surface));
+}
+
+.toolbar-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolbar-btn.active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: color-mix(in oklab, var(--color-accent) 10%, var(--color-surface));
+}
+
+/* 主操作按钮 - 锁定 */
+.toolbar-btn--primary {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: white;
+}
+
+.toolbar-btn--primary:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--color-accent) 85%, black);
+  border-color: color-mix(in oklab, var(--color-accent) 85%, black);
+  color: white;
+}
+
+.toolbar-btn--primary:disabled {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/* 按钮内的加载动画 */
+.toolbar-btn .is-spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* 主编辑区 */
 .editor-main {
   flex: 1;
   min-height: 0;
-  border-radius: var(--radius-xl);
   overflow: hidden;
 }
 
-/* AI 浮动按钮 */
-.ai-fab {
-  position: fixed;
-  right: 1.5rem;
-  bottom: 1.5rem;
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 50%;
+.editor-main :deep(.ui-markdown-editor) {
+  border-radius: 0;
+  height: 100%;
+}
+
+.editor-main :deep(.md-editor) {
+  border-radius: 0;
   border: none;
+}
+
+/* 按钮徽章 */
+.btn-badge {
+  min-width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 0.5rem;
   background: var(--color-accent);
   color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 20px color-mix(in oklab, var(--color-accent) 40%, transparent);
-  transition: transform 0.2s, box-shadow 0.2s;
-  z-index: 100;
-}
-
-.ai-fab:hover:not(:disabled) {
-  transform: scale(1.05);
-  box-shadow: 0 6px 24px color-mix(in oklab, var(--color-accent) 50%, transparent);
-}
-
-.ai-fab:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.ai-fab.active {
-  background: var(--color-surface-raised);
-  color: var(--color-text-primary);
-  box-shadow: var(--shadow-lg);
-}
-
-.fab-badge {
-  position: absolute;
-  top: -0.25rem;
-  right: -0.25rem;
-  min-width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 1rem;
-  background: #ef4444;
-  color: white;
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 700;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0 0.25rem;
+  margin-left: 0.125rem;
 }
 
 /* 右侧抽屉 */
