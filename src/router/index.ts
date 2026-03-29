@@ -30,14 +30,14 @@ const router = createRouter({
           component: () => import('@/views/Requirements/index.vue'),
         },
         {
-          path: 'prototype',
-          name: 'prototype',
-          component: () => import('@/views/Prototype/index.vue'),
-        },
-        {
           path: 'tech',
           name: 'tech',
           component: () => import('@/views/Tech/index.vue'),
+        },
+        {
+          path: 'prototype',
+          name: 'prototype',
+          component: () => import('@/views/Prototype/index.vue'),
         },
         {
           path: 'tasks',

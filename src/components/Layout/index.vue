@@ -45,8 +45,8 @@ const activePhase = computed(() => projectStore.activePhase)
 const navItems = computed(() => [
   { phase: 'overview', routeName: 'project-overview', label: '概览', icon: 'lucide:home', to: { name: 'project-overview', params: { id: projectId.value } } },
   { phase: 'requirements', routeName: 'requirements', label: '需求分析', icon: 'lucide:file-text', to: { name: 'requirements', params: { id: projectId.value } } },
-  { phase: 'prototype', routeName: 'prototype', label: '原型设计', icon: 'lucide:layout', to: { name: 'prototype', params: { id: projectId.value } } },
   { phase: 'tech', routeName: 'tech', label: '技术选型', icon: 'lucide:code', to: { name: 'tech', params: { id: projectId.value } } },
+  { phase: 'prototype', routeName: 'prototype', label: '原型设计', icon: 'lucide:layout', to: { name: 'prototype', params: { id: projectId.value } } },
   { phase: 'tasks', routeName: 'tasks', label: '任务看板', icon: 'lucide:kanban', to: { name: 'tasks', params: { id: projectId.value } } },
   { phase: 'retrospective', routeName: 'retrospective', label: '复盘总结', icon: 'lucide:line-chart', to: { name: 'retrospective', params: { id: projectId.value } } },
 ])

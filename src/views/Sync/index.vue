@@ -141,8 +141,8 @@ async function proceed() {
       defaultModel: 'claude-sonnet-4-6',
       phases: {
         requirements: { status: 'not_started' },
-        prototype: { status: 'not_started' },
         tech: { status: 'not_started' },
+        prototype: { status: 'not_started' },
         tasks: { status: 'not_started' },
         retrospective: { status: 'not_started' },
       },

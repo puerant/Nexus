@@ -20,8 +20,8 @@ export interface ProjectConfig {
   defaultModel: string
   phases: {
     requirements: PhaseState
-    prototype: PhaseState
     tech: PhaseState
+    prototype: PhaseState
     tasks: PhaseState
     retrospective: PhaseState
   }
