@@ -445,8 +445,8 @@ async function lockRequirements() {
     await writeFile(workspacePath, prdPath, editorContent.value)
     await persistProjectConfig('locked')
     isLocked.value = true
-    projectStore.setActivePhase('prototype')
-    await router.push({ name: 'prototype', params: { id: route.params.id as string } })
+    projectStore.setActivePhase('tech')
+    await router.push({ name: 'tech', params: { id: route.params.id as string } })
   } catch (error) {
     console.error('Failed to lock requirements:', error)
     alert(`锁定失败：${error}`)
