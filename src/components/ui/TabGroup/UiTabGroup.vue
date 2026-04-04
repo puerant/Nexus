@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import UiIcon from './UiIcon.vue'
+import UiIcon from '../UiIcon.vue'
 
 export interface TabItem {
   key: string

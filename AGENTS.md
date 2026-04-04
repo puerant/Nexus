@@ -29,6 +29,9 @@ src/components/ui/
 │   ├── UiMarkdownEditor.vue
 │   ├── UiMarkdownEditor.test.ts
 │   └── index.ts
+├── TabGroup/
+│   ├── UiTabGroup.vue
+│   └── index.ts
 └── ...
 ```
 
