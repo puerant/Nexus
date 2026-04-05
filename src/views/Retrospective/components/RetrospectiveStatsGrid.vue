@@ -14,8 +14,8 @@
 </template>
 
 <script setup lang="ts">
-import UiSurface from '@/components/ui/UiSurface.vue'
-import UiIcon from '@/components/ui/UiIcon.vue'
+import { UiSurface } from '@/components/ui/Surface'
+import { UiIcon } from '@/components/ui/Icon'
 
 export interface RetroStatItem {
   icon: string

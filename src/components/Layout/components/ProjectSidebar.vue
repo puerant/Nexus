@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
-import UiIcon from '@/components/ui/UiIcon.vue'
+import { UiIcon } from '@/components/ui/Icon'
 
 defineProps<{
   activePhase: string

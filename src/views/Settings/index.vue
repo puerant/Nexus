@@ -44,9 +44,9 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppLayout from '@/components/Layout/components/AppLayout.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiPageIntro from '@/components/ui/UiPageIntro.vue'
-import UiSurface from '@/components/ui/UiSurface.vue'
+import { UiButton } from '@/components/ui/Button'
+import { UiPageIntro } from '@/components/ui/PageIntro'
+import { UiSurface } from '@/components/ui/Surface'
 import { UiTabGroup, type TabItem } from '@/components/ui/TabGroup'
 
 import GeneralTab from './components/GeneralTab.vue'

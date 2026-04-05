@@ -51,7 +51,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import UiIcon from '@/components/ui/UiIcon.vue'
+import { UiIcon } from '@/components/ui/Icon'
 import { scanWorkspace, readFile } from '@/api/workspace'
 
 interface TemplateInfo {

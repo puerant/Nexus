@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import UiStatusBadge from '@/components/ui/UiStatusBadge.vue'
+import { UiStatusBadge } from '@/components/ui/StatusBadge'
 import { useProjectStore } from '@/stores/project.ts'
 
 defineProps<{

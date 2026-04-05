@@ -56,9 +56,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiSurface from '@/components/ui/UiSurface.vue'
-import UiIcon from '@/components/ui/UiIcon.vue'
+import { UiButton } from '@/components/ui/Button'
+import { UiSurface } from '@/components/ui/Surface'
+import { UiIcon } from '@/components/ui/Icon'
 import { UiHeatmap, generateDemoData } from '@/components/ui/Heatmap'
 import type { HeatmapData } from '@/components/ui/Heatmap'
 import { useProjectStore } from '@/stores/project'

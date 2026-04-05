@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import UiIcon from '@/components/ui/UiIcon.vue'
+import { UiIcon } from '@/components/ui/Icon'
 
 export interface PromptEntry {
   name: string

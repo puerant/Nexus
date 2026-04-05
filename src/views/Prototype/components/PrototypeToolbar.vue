@@ -49,8 +49,8 @@
 </template>
 
 <script setup lang="ts">
-import UiIcon from '@/components/ui/UiIcon.vue'
-import UiStatusBadge from '@/components/ui/UiStatusBadge.vue'
+import { UiIcon } from '@/components/ui/Icon'
+import { UiStatusBadge } from '@/components/ui/StatusBadge'
 
 defineProps<{
   isLocked: boolean

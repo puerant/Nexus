@@ -50,7 +50,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { FileEntry } from '@/api/workspace'
-import UiIcon from '@/components/ui/UiIcon.vue'
+import { UiIcon } from '@/components/ui/Icon'
 
 const props = defineProps<{
   entry: FileEntry

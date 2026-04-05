@@ -32,7 +32,7 @@
 
 <script setup lang="ts">
 import type { FileEntry } from '@/api/workspace'
-import UiIcon from '@/components/ui/UiIcon.vue'
+import { UiIcon } from '@/components/ui/Icon'
 import FileTreeItem from './FileTreeItem.vue'
 
 defineProps<{

@@ -172,9 +172,9 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiSurface from '@/components/ui/UiSurface.vue'
-import UiIcon from '@/components/ui/UiIcon.vue'
+import { UiButton } from '@/components/ui/Button'
+import { UiSurface } from '@/components/ui/Surface'
+import { UiIcon } from '@/components/ui/Icon'
 import { type Agent, getSkillIcon, getMcpIcon, fmtEnv, tryParseEnv, SKILL_ICON_MAP } from '../types'
 
 function toast(msg: string) { alert(msg) }

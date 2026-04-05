@@ -40,8 +40,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiSurface from '@/components/ui/UiSurface.vue'
+import { UiButton } from '@/components/ui/Button'
+import { UiSurface } from '@/components/ui/Surface'
 
 const defaultModel = ref(localStorage.getItem('default_model') ?? 'claude-sonnet-4-6')
 const anthropicKey = ref(localStorage.getItem('anthropic_api_key') ?? '')

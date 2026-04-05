@@ -144,9 +144,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiIcon from '@/components/ui/UiIcon.vue'
-import UiStatusBadge from '@/components/ui/UiStatusBadge.vue'
+import { UiButton } from '@/components/ui/Button'
+import { UiIcon } from '@/components/ui/Icon'
+import { UiStatusBadge } from '@/components/ui/StatusBadge'
 import { UiMarkdownEditor } from '@/components/ui/MarkdownEditor'
 import { readFile, readProjectConfig, writeFile, writeProjectConfig } from '@/api/workspace'
 import { useProjectStore, type ProjectConfig } from '@/stores/project'

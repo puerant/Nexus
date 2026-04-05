@@ -60,8 +60,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiSurface from '@/components/ui/UiSurface.vue'
+import { UiButton } from '@/components/ui/Button'
+import { UiSurface } from '@/components/ui/Surface'
 import { UiHeatmap, generateDemoData } from '@/components/ui/Heatmap'
 import StatsGrid from './components/StatsGrid.vue'
 import ActivityList from './components/ActivityList.vue'

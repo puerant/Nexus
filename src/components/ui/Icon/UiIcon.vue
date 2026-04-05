@@ -1,5 +1,5 @@
  <template>
-  <span class="ui-icon" :class="`ui-icon--${size}`">
+  <span class="ui-icon" :class="size ? `ui-icon--${size}` : ''">
     <Icon :icon="icon" />
   </span>
 </template>

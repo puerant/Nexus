@@ -92,11 +92,11 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppLayout from '@/components/Layout/components/AppLayout.vue'
 import ProjectToolbar from '@/components/Layout/components/ProjectToolbar.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiIcon from '@/components/ui/UiIcon.vue'
-import UiPageIntro from '@/components/ui/UiPageIntro.vue'
-import UiStatusBadge from '@/components/ui/UiStatusBadge.vue'
-import UiSurface from '@/components/ui/UiSurface.vue'
+import { UiButton } from '@/components/ui/Button'
+import { UiIcon } from '@/components/ui/Icon'
+import { UiPageIntro } from '@/components/ui/PageIntro'
+import { UiStatusBadge } from '@/components/ui/StatusBadge'
+import { UiSurface } from '@/components/ui/Surface'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useProjectStore } from '@/stores/project'
 import { initProjectStructure, writeProjectConfig } from '@/api/workspace'
@@ -154,14 +154,16 @@ async function proceed() {
 
 <style scoped>
 .sync-screen {
-  min-height: 100%;
+  height: 100%;
   padding: clamp(1.25rem, 2.8vw, 2rem);
+  overflow: hidden;
 }
 
 .sync-stack {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  height: 100%;
 }
 
 .step-panel {
@@ -191,6 +193,10 @@ async function proceed() {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.125rem;
+  align-items: start;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .option-card {
@@ -297,6 +303,8 @@ async function proceed() {
   align-items: center;
   gap: 0.75rem;
   justify-content: flex-end;
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 @media (max-width: 960px) {

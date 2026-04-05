@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
+import { UiButton } from '@/components/ui/Button'
 import { openTerminal, openFileExplorer } from '@/api/system'
 
 const props = withDefaults(

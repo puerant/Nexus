@@ -12,8 +12,8 @@
 </template>
 
 <script setup lang="ts">
-import UiPageIntro from '@/components/ui/UiPageIntro.vue'
-import UiSurface from '@/components/ui/UiSurface.vue'
+import { UiPageIntro } from '@/components/ui/PageIntro'
+import { UiSurface } from '@/components/ui/Surface'
 
 defineProps<{
   title: string

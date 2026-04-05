@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import UiStatusBadge from '@/components/ui/UiStatusBadge.vue'
+import { UiStatusBadge } from '@/components/ui/StatusBadge'
 
 export interface PhaseItem {
   id: string

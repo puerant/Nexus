@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import UiSurface from '@/components/ui/UiSurface.vue'
+import { UiSurface } from '@/components/ui/Surface'
 
 export interface StatItem {
   label: string

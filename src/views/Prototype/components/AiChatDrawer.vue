@@ -84,8 +84,8 @@
 
 <script setup lang="ts">
 import { nextTick, ref } from 'vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiIcon from '@/components/ui/UiIcon.vue'
+import { UiButton } from '@/components/ui/Button'
+import { UiIcon } from '@/components/ui/Icon'
 import type { ElementInfo } from '@/components/ui/IFramePreview'
 
 export interface ChatMessage {

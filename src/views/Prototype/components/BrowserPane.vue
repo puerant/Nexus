@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import UiIcon from '@/components/ui/UiIcon.vue'
+import { UiIcon } from '@/components/ui/Icon'
 import { IFramePreview, type ElementInfo } from '@/components/ui/IFramePreview'
 
 const props = defineProps<{
