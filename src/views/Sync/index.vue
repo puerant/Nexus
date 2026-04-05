@@ -82,13 +82,7 @@
     </div>
 
     <template #toolbar>
-      <div class="toolbar-group">
-        <UiButton variant="ghost" size="sm" @click="openPowerShell">PowerShell</UiButton>
-        <UiButton variant="ghost" size="sm" @click="openWorkspaceFolder">打开工作区</UiButton>
-      </div>
-      <div class="toolbar-group toolbar-meta">
-        <span class="toolbar-hint">同步准备阶段</span>
-      </div>
+      <ProjectToolbar hint="同步准备阶段" explorer-label="打开工作区" :working-dir="workspaceStore.currentWorkspace?.path" />
     </template>
   </AppLayout>
 </template>
@@ -96,8 +90,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { open } from '@tauri-apps/plugin-shell'
 import AppLayout from '@/components/Layout/components/AppLayout.vue'
+import ProjectToolbar from '@/components/Layout/components/ProjectToolbar.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiIcon from '@/components/ui/UiIcon.vue'
 import UiPageIntro from '@/components/ui/UiPageIntro.vue'
@@ -155,15 +149,6 @@ async function proceed() {
   } finally {
     isLoading.value = false
   }
-}
-
-async function openPowerShell() {
-  await open('C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe')
-}
-
-async function openWorkspaceFolder() {
-  const path = workspaceStore.currentWorkspace?.path ?? 'C:/'
-  await open(path, 'explorer.exe')
 }
 </script>
 
@@ -302,25 +287,16 @@ async function openWorkspaceFolder() {
   border-color: color-mix(in oklab, var(--color-accent) 28%, white 72%);
 }
 
-.field-hint,
-.toolbar-hint {
+.field-hint {
   font-size: 0.75rem;
   color: var(--color-text-tertiary);
 }
 
-.actions,
-.toolbar-group {
+.actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-}
-
-.actions {
   justify-content: flex-end;
-}
-
-.toolbar-meta {
-  color: var(--color-text-secondary);
 }
 
 @media (max-width: 960px) {
