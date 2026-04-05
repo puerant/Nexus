@@ -18,7 +18,7 @@
     </div>
 
     <template #toolbar>
-      <ProjectToolbar :hint="workspaceSubtitle" @powershell="openPowerShell" @explorer="openWorkspaceFolder" />
+      <ProjectToolbar :hint="workspaceSubtitle" :working-dir="workspaceStore.currentWorkspace?.path" />
     </template>
   </AppLayout>
 </template>
@@ -26,7 +26,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useRoute, RouterView } from 'vue-router'
-import { open } from '@tauri-apps/plugin-shell'
 import AppLayout from '@/components/Layout/components/AppLayout.vue'
 import ProjectSidebar from '@/components/Layout/components/ProjectSidebar.vue'
 import ProjectToolbar from '@/components/Layout/components/ProjectToolbar.vue'
@@ -64,15 +63,6 @@ onMounted(async () => {
     }
   }
 })
-
-async function openPowerShell() {
-  await open('C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe')
-}
-
-async function openWorkspaceFolder() {
-  const path = workspaceStore.currentWorkspace?.path ?? 'C:/'
-  await open(path, 'explorer.exe')
-}
 </script>
 
 <style scoped>

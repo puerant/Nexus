@@ -80,15 +80,11 @@
     </div>
 
     <template #toolbar>
-      <div class="toolbar-group">
-        <UiButton variant="ghost" size="sm" @click="openPowerShell">PowerShell</UiButton>
-        <UiButton variant="ghost" size="sm" @click="openCommandPrompt">命令提示符</UiButton>
-        <UiButton variant="ghost" size="sm" @click="openExplorer">打开文件夹</UiButton>
-      </div>
-      <div class="toolbar-group toolbar-meta">
-        <span class="toolbar-hint">底部工具栏</span>
-        <UiButton variant="link" size="sm" :to="{ name: 'sync' }">进入同步配置</UiButton>
-      </div>
+      <ProjectToolbar hint="底部工具栏" explorer-label="打开文件夹" :working-dir="workspaceStore.currentWorkspace?.path">
+        <template #actions>
+          <UiButton variant="link" size="sm" :to="{ name: 'sync' }">进入同步配置</UiButton>
+        </template>
+      </ProjectToolbar>
     </template>
   </AppLayout>
 </template>
@@ -96,7 +92,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { openTerminal, openFileExplorer } from '@/api/system'
+import ProjectToolbar from '@/components/Layout/components/ProjectToolbar.vue'
 import AppLayout from '@/components/Layout/components/AppLayout.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiIcon from '@/components/ui/UiIcon.vue'
@@ -165,30 +161,6 @@ function handleDrop(e: DragEvent) {
         }
       }
     }
-  }
-}
-
-async function openPowerShell() {
-  try {
-    await openTerminal('powershell', workspaceStore.currentWorkspace?.path)
-  } catch (e) {
-    console.error('Failed to open PowerShell:', e)
-  }
-}
-
-async function openCommandPrompt() {
-  try {
-    await openTerminal('cmd', workspaceStore.currentWorkspace?.path)
-  } catch (e) {
-    console.error('Failed to open Command Prompt:', e)
-  }
-}
-
-async function openExplorer() {
-  try {
-    await openFileExplorer(workspaceStore.currentWorkspace?.path)
-  } catch (e) {
-    console.error('Failed to open file explorer:', e)
   }
 }
 
@@ -390,16 +362,6 @@ function formatTime(iso: string): string {
 
 .drop-hint {
   font-size: 0.75rem;
-  color: var(--color-text-secondary);
-}
-
-.toolbar-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.toolbar-meta {
   color: var(--color-text-secondary);
 }
 
