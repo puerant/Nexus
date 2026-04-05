@@ -96,7 +96,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { open } from '@tauri-apps/plugin-shell'
+import { openTerminal, openFileExplorer } from '@/api/system'
 import AppLayout from '@/components/Layout/components/AppLayout.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiIcon from '@/components/ui/UiIcon.vue'
@@ -169,16 +169,27 @@ function handleDrop(e: DragEvent) {
 }
 
 async function openPowerShell() {
-  await open('C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe')
+  try {
+    await openTerminal('powershell', workspaceStore.currentWorkspace?.path)
+  } catch (e) {
+    console.error('Failed to open PowerShell:', e)
+  }
 }
 
 async function openCommandPrompt() {
-  await open('C:/Windows/System32/cmd.exe')
+  try {
+    await openTerminal('cmd', workspaceStore.currentWorkspace?.path)
+  } catch (e) {
+    console.error('Failed to open Command Prompt:', e)
+  }
 }
 
 async function openExplorer() {
-  const path = workspaceStore.currentWorkspace?.path ?? 'C:/'
-  await open(path, 'explorer.exe')
+  try {
+    await openFileExplorer(workspaceStore.currentWorkspace?.path)
+  } catch (e) {
+    console.error('Failed to open file explorer:', e)
+  }
 }
 
 function formatTime(iso: string): string {
