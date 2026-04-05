@@ -45,9 +45,15 @@
                 <label class="field-label">仓库地址</label>
                 <div class="input-row">
                   <input v-model="githubRepo" class="field-input" type="text" placeholder="https://github.com/username/repo" />
-                  <UiButton size="sm" @click.stop="verifyRepo">验证</UiButton>
+                  <UiButton size="sm" :disabled="verifyStatus === 'loading'" @click.stop="handleVerifyRepo">
+                    {{ verifyStatus === 'loading' ? '验证中…' : '验证' }}
+                  </UiButton>
                 </div>
-                <div class="field-hint">支持 HTTPS 或 SSH 格式。</div>
+                <div v-if="verifyMessage" class="field-hint" :class="{
+                  'verify-success': verifyStatus === 'success',
+                  'verify-error': verifyStatus === 'error',
+                }">{{ verifyMessage }}</div>
+                <div v-else class="field-hint">支持 HTTPS 或 SSH 格式。</div>
               </div>
               <div>
                 <label class="field-label">Personal Access Token（可选）</label>
@@ -100,6 +106,7 @@ import { UiSurface } from '@/components/ui/Surface'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useProjectStore } from '@/stores/project'
 import { initProjectStructure, writeProjectConfig } from '@/api/workspace'
+import { verifyRepo as verifyRepoApi, gitInit, gitSetRemote, saveCredential } from '@/api/git'
 
 const router = useRouter()
 const workspaceStore = useWorkspaceStore()
@@ -109,9 +116,38 @@ const syncType = ref<'github' | 'none'>('none')
 const githubRepo = ref('')
 const githubToken = ref('')
 const isLoading = ref(false)
+const verifyStatus = ref<'idle' | 'loading' | 'success' | 'error'>('idle')
+const verifyMessage = ref('')
 
-function verifyRepo() {
-  alert('仓库验证功能将在后续版本提供。')
+async function handleVerifyRepo() {
+  if (!githubRepo.value) {
+    verifyStatus.value = 'error'
+    verifyMessage.value = '请输入仓库地址'
+    return
+  }
+
+  verifyStatus.value = 'loading'
+  verifyMessage.value = ''
+
+  try {
+    const result = await verifyRepoApi(
+      githubRepo.value,
+      githubToken.value || undefined,
+    )
+
+    if (result.accessible) {
+      verifyStatus.value = 'success'
+      verifyMessage.value = result.defaultBranch
+        ? `验证成功，默认分支: ${result.defaultBranch}`
+        : '验证成功'
+    } else {
+      verifyStatus.value = 'error'
+      verifyMessage.value = result.message || '无法访问仓库'
+    }
+  } catch (e) {
+    verifyStatus.value = 'error'
+    verifyMessage.value = `验证失败: ${e}`
+  }
 }
 
 async function proceed() {
@@ -122,9 +158,40 @@ async function proceed() {
   }
   isLoading.value = true
   try {
+    // 1. Initialize .ai-workflow/ directory structure
     await initProjectStructure(ws.path, ws.name)
-    const syncConfig = syncType.value === 'github' ? { type: 'github', repoUrl: githubRepo.value } : { type: 'none' }
+
+    // 2. Handle Git setup if GitHub sync selected
+    let syncConfig: Record<string, unknown>
+    if (syncType.value === 'github') {
+      // Initialize git repo
+      await gitInit(ws.path)
+
+      // Set remote origin
+      await gitSetRemote(ws.path, 'origin', githubRepo.value)
+
+      // Save token to encrypted local storage
+      if (githubToken.value) {
+        try {
+          await saveCredential(ws.path, 'github-pat', githubToken.value)
+        } catch (e) {
+          console.warn('Failed to save credential:', e)
+        }
+      }
+
+      syncConfig = {
+        type: 'github',
+        repoUrl: githubRepo.value,
+        remoteName: 'origin',
+      }
+    } else {
+      syncConfig = { type: 'none' }
+    }
+
+    // 3. Write project config
     await writeProjectConfig(ws.path, { sync: syncConfig, updatedAt: new Date().toISOString() } as Record<string, unknown>)
+
+    // 4. Update store
     projectStore.setCurrentProject({
       id: ws.path,
       name: ws.name,
@@ -142,6 +209,8 @@ async function proceed() {
       },
       sync: syncConfig as { type: 'github' | 'none'; repoUrl?: string },
     })
+
+    // 5. Navigate to project overview
     await router.push({ name: 'project-overview', params: { id: encodeURIComponent(ws.path) } })
   } catch (e) {
     console.error('Failed to initialize workspace:', e)
@@ -297,6 +366,9 @@ async function proceed() {
   font-size: 0.75rem;
   color: var(--color-text-tertiary);
 }
+
+.verify-success { color: var(--color-success, #22c55e); }
+.verify-error { color: var(--color-danger, #ef4444); }
 
 .actions {
   display: flex;

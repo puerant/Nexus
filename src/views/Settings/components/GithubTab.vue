@@ -64,25 +64,77 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { UiButton } from '@/components/ui/Button'
 import { UiSurface } from '@/components/ui/Surface'
 import { UiIcon } from '@/components/ui/Icon'
+import { verifyRepo as verifyRepoApi, saveCredential, getCredential } from '@/api/git'
+import { useWorkspaceStore } from '@/stores/workspace'
 
 function toast(msg: string) { alert(msg) }
 
-const username = ref('octocat')
-const token = ref('ghp_xxxxxxxxxxxxxxxxxxxx')
+const workspaceStore = useWorkspaceStore()
+
+const username = ref('')
+const token = ref('')
 const remote = ref('origin')
 const defaultBranch = ref('main')
 const sshKey = ref('')
 const connected = ref(false)
+const testing = ref(false)
 
-function testConnection() {
-  connected.value = !!(username.value && token.value)
-  toast(connected.value ? 'GitHub 连接成功' : '请填写用户名和 Token')
+onMounted(async () => {
+  const ws = workspaceStore.currentWorkspace
+  if (!ws) return
+  try {
+    const saved = await getCredential(ws.path, 'github-pat')
+    if (saved) {
+      token.value = saved
+      connected.value = true
+    }
+    const savedUser = await getCredential(ws.path, 'github-username')
+    if (savedUser) {
+      username.value = savedUser
+    }
+  } catch {
+    // Credentials not available yet
+  }
+})
+
+async function testConnection() {
+  if (!token.value) {
+    toast('请填写 Token')
+    return
+  }
+  testing.value = true
+  try {
+    const result = await verifyRepoApi('https://github.com/octocat/Hello-World', token.value)
+    connected.value = result.accessible
+    toast(result.accessible ? 'GitHub 连接成功' : `连接失败: ${result.message}`)
+  } catch (e) {
+    connected.value = false
+    toast(`连接失败: ${e}`)
+  } finally {
+    testing.value = false
+  }
 }
-function save() {
-  toast('GitHub 配置已保存')
+
+async function save() {
+  const ws = workspaceStore.currentWorkspace
+  if (!ws) {
+    toast('请先打开一个工作区')
+    return
+  }
+  try {
+    if (token.value) {
+      await saveCredential(ws.path, 'github-pat', token.value)
+    }
+    if (username.value) {
+      await saveCredential(ws.path, 'github-username', username.value)
+    }
+    toast('GitHub 配置已保存')
+  } catch (e) {
+    toast(`保存失败: ${e}`)
+  }
 }
 </script>
